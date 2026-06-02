@@ -97,11 +97,16 @@ html,body{height:100%;width:100%;overflow:hidden;background:#1a1208;}
   overflow:hidden;
   display:flex;
   flex-direction:column;
+  pointer-events:none;
 }
 .screen.active{
   transform:translateX(0);
   opacity:1;
   z-index:10;
+  pointer-events:auto;
+}
+.screen.slide-from-left{
+  transform:translateX(-100%);
 }
 .screen.exit-left{
   transform:translateX(-100%);
@@ -1159,7 +1164,7 @@ html,body{height:100%;width:100%;overflow:hidden;background:#1a1208;}
     <div class="app-container" id="appContainer">
 
       <!-- ===== SPLASH ===== -->
-      <div class="screen active" id="s-splash" style="display:flex;flex-direction:column;align-items:center;justify-content:center;position:absolute;inset:0;transform:none;opacity:1;z-index:10;">
+      <div class="screen active" id="s-splash">
         <img src="Logo%2C%20Price%2C%20Address%2C/recoverylogo.jpg" alt="Recovery Iloilo" class="splash-logo" onerror="this.style.display='none';this.nextElementSibling.style.marginTop='0'">
         <div class="splash-wordmark">Recovery Iloilo</div>
         <div class="splash-tagline">Massage &middot; Therapy &middot; Pamper</div>
@@ -1743,11 +1748,11 @@ const CAT_COLORS = {body:'#8A4A1A', face:'#6B6353', recovery:'#2C6B2F'};
 // INIT
 // =====================================================================
 window.addEventListener('DOMContentLoaded', function() {
-  // Splash animation
+  // Splash bar — double rAF ensures browser paints width:0% before animating to 100%
   const bar = document.getElementById('splashBar');
-  requestAnimationFrame(() => {
+  requestAnimationFrame(() => requestAnimationFrame(() => {
     bar.style.width = '100%';
-  });
+  }));
 
   setTimeout(() => {
     const saved = localStorage.getItem('ri_mobile_user');
@@ -1774,45 +1779,21 @@ function showScreen(id, direction) {
   const next = document.getElementById(id);
   if (!next || id === currentScreen) return;
 
-  // Remove all transition classes first
-  const allScreens = document.querySelectorAll('.screen:not(.tab-screen)');
-  allScreens.forEach(s => {
-    s.classList.remove('active','exit-left','exit-right');
-    s.style.zIndex = '';
-  });
-
-  if (direction === 'forward') {
-    // New comes from right
-    next.style.transform = 'translateX(100%)';
-    next.style.opacity = '0';
-    next.style.zIndex = '10';
-    prev.style.zIndex = '5';
-
-    requestAnimationFrame(() => {
-      next.classList.add('active');
-      prev.classList.add('exit-left');
-    });
-  } else {
-    // New comes from left (back)
-    next.style.transform = 'translateX(-100%)';
-    next.style.opacity = '0';
-    next.style.zIndex = '10';
-    prev.style.zIndex = '5';
-
-    requestAnimationFrame(() => {
-      next.classList.add('active');
-      prev.classList.add('exit-right');
-    });
+  if (direction === 'back') {
+    // Position next off-screen left before activating
+    next.classList.add('slide-from-left');
+    // Force a reflow so the initial position paints before the transition starts
+    next.getBoundingClientRect();
   }
 
-  // Clean up transition styles after animation
+  next.classList.add('active');
+  prev.classList.add(direction === 'forward' ? 'exit-left' : 'exit-right');
+
+  // Cleanup after transition completes
   setTimeout(() => {
-    prev.classList.remove('exit-left','exit-right');
-    prev.style.transform = '';
-    prev.style.opacity = '';
-    prev.style.zIndex = '';
-    next.style.zIndex = '';
-  }, 400);
+    prev.classList.remove('active', 'exit-left', 'exit-right');
+    next.classList.remove('slide-from-left');
+  }, 380);
 
   currentScreen = id;
 }
