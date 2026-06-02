@@ -1,0 +1,2228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Recovery Iloilo — Client App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --cream:#F3EEE4;
+  --cream-deep:#E7DECF;
+  --card:#FBF8F2;
+  --olive:#2C2416;
+  --ink:#2C2416;
+  --ink-60:#6B6353;
+  --ink-40:#9C9686;
+  --on-dark:#EFE9DC;
+  --on-dark-60:#B3AB97;
+  --line:#D5CBB8;
+  --accent:#8A4A1A;
+  --serif:"Cormorant Garamond",Georgia,serif;
+  --sans:"DM Sans",system-ui,sans-serif;
+}
+
+html,body{height:100%;width:100%;overflow:hidden;background:#1a1208;}
+
+/* ---- DEVICE WRAP ---- */
+.device-wrap{
+  min-height:100vh;
+  background:linear-gradient(135deg,#1a1208 0%,#2C2416 50%,#1a1208 100%);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:40px 20px;
+}
+.device{
+  width:390px;
+  height:844px;
+  background:var(--cream);
+  border-radius:48px;
+  box-shadow:0 0 0 1px rgba(255,255,255,.1),0 40px 120px rgba(0,0,0,.7),inset 0 0 0 2px #2a2a2a;
+  position:relative;
+  overflow:hidden;
+  flex-shrink:0;
+  font-family:var(--sans);
+  color:var(--ink);
+}
+.device-island{
+  position:absolute;
+  top:12px;left:50%;
+  transform:translateX(-50%);
+  width:120px;height:34px;
+  background:#000;
+  border-radius:20px;
+  z-index:999;
+  pointer-events:none;
+}
+
+/* ---- STATUS BAR ---- */
+.status-bar{
+  position:absolute;
+  top:0;left:0;right:0;
+  height:44px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 28px 0 28px;
+  z-index:100;
+  pointer-events:none;
+}
+.status-time{
+  font-family:var(--sans);
+  font-size:15px;
+  font-weight:500;
+  color:var(--ink);
+  letter-spacing:-.2px;
+}
+.status-icons{display:flex;align-items:center;gap:6px;}
+
+/* ---- SCREEN SYSTEM ---- */
+.app-container{
+  position:absolute;
+  inset:0;
+  overflow:hidden;
+}
+.screen{
+  position:absolute;
+  inset:0;
+  background:var(--cream);
+  transform:translateX(100%);
+  opacity:0;
+  transition:transform .35s cubic-bezier(.4,0,.2,1), opacity .35s cubic-bezier(.4,0,.2,1);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+.screen.active{
+  transform:translateX(0);
+  opacity:1;
+  z-index:10;
+}
+.screen.exit-left{
+  transform:translateX(-100%);
+  opacity:0;
+  z-index:5;
+}
+.screen.exit-right{
+  transform:translateX(100%);
+  opacity:0;
+  z-index:5;
+}
+.screen.tab-screen{
+  transform:none;
+  opacity:0;
+  transition:opacity .25s ease;
+}
+.screen.tab-screen.active{
+  transform:none;
+  opacity:1;
+}
+.screen.tab-screen.exit-left,
+.screen.tab-screen.exit-right{
+  transform:none;
+  opacity:0;
+}
+
+/* ---- SCROLLABLE CONTENT ---- */
+.screen-scroll{
+  flex:1;
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+.screen-scroll::-webkit-scrollbar{display:none;}
+
+/* ---- TAB BAR ---- */
+.tab-bar{
+  position:absolute;
+  bottom:0;left:0;right:0;
+  height:82px;
+  background:var(--card);
+  border-top:1px solid var(--line);
+  display:flex;
+  align-items:flex-start;
+  padding-top:8px;
+  padding-bottom:24px;
+  z-index:200;
+}
+.tab-item{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+  cursor:pointer;
+  position:relative;
+  -webkit-tap-highlight-color:transparent;
+  user-select:none;
+}
+.tab-item svg{transition:color .2s;}
+.tab-item .tab-label{
+  font-size:10px;
+  font-weight:500;
+  letter-spacing:.3px;
+  color:var(--ink-40);
+  transition:color .2s;
+}
+.tab-item.active svg{color:var(--olive);}
+.tab-item.active .tab-label{color:var(--olive);}
+.tab-dot{
+  width:4px;height:4px;
+  border-radius:50%;
+  background:var(--olive);
+  position:absolute;
+  bottom:-2px;
+  opacity:0;
+  transition:opacity .2s;
+}
+.tab-item.active .tab-dot{opacity:1;}
+
+/* ---- SPLASH ---- */
+#s-splash{
+  background:var(--cream);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  transform:none;
+  opacity:1;
+}
+.splash-logo{
+  width:64px;height:64px;
+  border-radius:16px;
+  object-fit:cover;
+  margin-bottom:20px;
+  box-shadow:0 4px 20px rgba(44,36,22,.15);
+}
+.splash-wordmark{
+  font-family:var(--serif);
+  font-size:28px;
+  font-weight:400;
+  color:var(--olive);
+  letter-spacing:.5px;
+  margin-bottom:8px;
+}
+.splash-tagline{
+  font-family:var(--sans);
+  font-size:11px;
+  font-weight:400;
+  letter-spacing:3px;
+  text-transform:uppercase;
+  color:var(--ink-60);
+}
+.splash-bar-track{
+  position:absolute;
+  bottom:0;left:0;right:0;
+  height:2px;
+  background:var(--cream-deep);
+}
+.splash-bar-fill{
+  height:100%;
+  background:var(--olive);
+  width:0%;
+  transition:width 1.8s cubic-bezier(.4,0,.2,1);
+}
+
+/* ---- ONBOARDING ---- */
+#s-onboard{
+  transform:translateX(100%);
+}
+.onboard-inner{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  padding:80px 32px 0;
+}
+.onboard-slides{
+  flex:1;
+  position:relative;
+  overflow:hidden;
+}
+.onboard-slide{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  opacity:0;
+  transform:translateX(60px);
+  transition:transform .4s cubic-bezier(.4,0,.2,1), opacity .4s;
+  pointer-events:none;
+}
+.onboard-slide.active{
+  opacity:1;
+  transform:translateX(0);
+  pointer-events:auto;
+}
+.onboard-slide.exit-slide{
+  opacity:0;
+  transform:translateX(-60px);
+}
+.slide-illus{
+  width:140px;height:140px;
+  border-radius:50%;
+  background:var(--cream-deep);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin-bottom:36px;
+  flex-shrink:0;
+}
+.slide-heading{
+  font-family:var(--serif);
+  font-size:30px;
+  font-weight:400;
+  color:var(--olive);
+  text-align:center;
+  line-height:1.2;
+  margin-bottom:14px;
+}
+.slide-body{
+  font-size:14px;
+  color:var(--ink-60);
+  text-align:center;
+  line-height:1.6;
+  max-width:260px;
+}
+.onboard-nav{
+  padding:24px 32px 40px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:16px;
+}
+.dots{display:flex;gap:8px;align-items:center;}
+.dot{
+  width:6px;height:6px;
+  border-radius:50%;
+  background:var(--line);
+  transition:width .25s, background .25s;
+}
+.dot.active{
+  width:20px;
+  border-radius:3px;
+  background:var(--olive);
+}
+.onboard-arrows{
+  display:flex;
+  align-items:center;
+  gap:20px;
+  width:100%;
+  justify-content:space-between;
+}
+.arrow-btn{
+  width:44px;height:44px;
+  border-radius:50%;
+  border:1px solid var(--line);
+  background:transparent;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  color:var(--ink);
+  transition:background .2s, border-color .2s;
+  -webkit-tap-highlight-color:transparent;
+}
+.arrow-btn:disabled{opacity:.3;pointer-events:none;}
+.arrow-btn:active{background:var(--cream-deep);}
+.btn-primary{
+  flex:1;
+  height:48px;
+  background:var(--olive);
+  color:var(--on-dark);
+  border:none;
+  border-radius:24px;
+  font-family:var(--sans);
+  font-size:14px;
+  font-weight:500;
+  letter-spacing:.3px;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:opacity .2s;
+  -webkit-tap-highlight-color:transparent;
+}
+.btn-primary:active{opacity:.8;}
+.onboard-signin{
+  font-size:13px;
+  color:var(--ink-60);
+  text-align:center;
+  cursor:pointer;
+}
+.onboard-signin span{
+  color:var(--accent);
+  text-decoration:underline;
+  text-underline-offset:2px;
+}
+
+/* ---- AUTH ---- */
+#s-auth{transform:translateX(100%);}
+.auth-inner{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  padding:80px 28px 40px;
+  overflow-y:auto;
+}
+.auth-logo{
+  width:48px;height:48px;
+  border-radius:12px;
+  object-fit:cover;
+  margin-bottom:16px;
+  box-shadow:0 2px 12px rgba(44,36,22,.12);
+}
+.auth-title{
+  font-family:var(--serif);
+  font-size:26px;
+  color:var(--olive);
+  margin-bottom:4px;
+}
+.auth-sub{font-size:13px;color:var(--ink-60);margin-bottom:28px;}
+.auth-tabs{
+  display:flex;
+  border-bottom:1px solid var(--line);
+  margin-bottom:28px;
+}
+.auth-tab{
+  flex:1;
+  text-align:center;
+  padding-bottom:10px;
+  font-size:14px;
+  font-weight:500;
+  color:var(--ink-40);
+  cursor:pointer;
+  position:relative;
+  -webkit-tap-highlight-color:transparent;
+  transition:color .2s;
+}
+.auth-tab.active{color:var(--olive);}
+.auth-tab.active::after{
+  content:'';
+  position:absolute;
+  bottom:-1px;left:10%;right:10%;
+  height:2px;
+  background:var(--olive);
+  border-radius:1px;
+}
+.auth-form{display:none;flex-direction:column;gap:14px;}
+.auth-form.active{display:flex;}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-label{font-size:11px;font-weight:500;letter-spacing:.8px;text-transform:uppercase;color:var(--ink-60);}
+.form-input{
+  width:100%;
+  height:48px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:var(--card);
+  padding:0 16px;
+  font-family:var(--sans);
+  font-size:14px;
+  color:var(--ink);
+  outline:none;
+  transition:border-color .2s;
+}
+.form-input:focus{border-color:var(--olive);}
+.form-input::placeholder{color:var(--ink-40);}
+.form-error{
+  font-size:12px;
+  color:#c0392b;
+  min-height:16px;
+  display:none;
+}
+.form-error.show{display:block;}
+.btn-demo{
+  height:48px;
+  border:1px solid var(--line);
+  border-radius:24px;
+  background:transparent;
+  font-family:var(--sans);
+  font-size:13px;
+  color:var(--ink-60);
+  cursor:pointer;
+  transition:background .2s;
+  -webkit-tap-highlight-color:transparent;
+}
+.btn-demo:active{background:var(--cream-deep);}
+
+/* ---- HOME ---- */
+.screen-header{
+  padding:56px 20px 0;
+  flex-shrink:0;
+}
+.home-topbar{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  padding:56px 20px 16px;
+  flex-shrink:0;
+}
+.home-greeting{
+  font-family:var(--serif);
+  font-size:26px;
+  font-weight:400;
+  color:var(--olive);
+  line-height:1.2;
+  flex:1;
+}
+.notif-btn{
+  width:40px;height:40px;
+  border-radius:50%;
+  background:var(--card);
+  border:1px solid var(--line);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  cursor:pointer;
+  flex-shrink:0;
+  -webkit-tap-highlight-color:transparent;
+}
+.notif-badge{
+  position:absolute;
+  top:-2px;right:-2px;
+  width:16px;height:16px;
+  border-radius:50%;
+  background:var(--olive);
+  color:var(--on-dark);
+  font-size:9px;
+  font-weight:500;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.section-pad{padding:0 20px;}
+.section-title{
+  font-family:var(--serif);
+  font-size:18px;
+  color:var(--olive);
+  margin-bottom:12px;
+}
+
+/* ---- LOYALTY CARD ---- */
+.loyalty-card{
+  margin:0 20px 20px;
+  background:var(--olive);
+  border-radius:20px;
+  padding:20px;
+  position:relative;
+  overflow:hidden;
+  color:var(--on-dark);
+}
+.loyalty-watermark{
+  position:absolute;
+  bottom:10px;right:14px;
+  font-family:var(--serif);
+  font-size:36px;
+  font-weight:300;
+  color:rgba(239,233,220,.06);
+  pointer-events:none;
+  white-space:nowrap;
+  letter-spacing:2px;
+}
+.loyalty-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  margin-bottom:20px;
+}
+.loyalty-left{}
+.loyalty-ri-label{
+  font-size:10px;
+  font-weight:500;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  color:var(--on-dark-60);
+  margin-bottom:6px;
+}
+.tier-badge{
+  display:inline-flex;
+  align-items:center;
+  padding:2px 10px;
+  border-radius:20px;
+  font-size:10px;
+  font-weight:500;
+  letter-spacing:1px;
+  text-transform:uppercase;
+  margin-bottom:8px;
+}
+.tier-Gold{background:rgba(200,133,42,.25);color:#E6AA4A;}
+.tier-Silver{background:rgba(179,171,151,.25);color:#B3AB97;}
+.tier-Bronze{background:rgba(138,74,26,.25);color:#C87A3A;}
+.tier-Platinum{background:rgba(220,220,240,.15);color:#D0D0E8;}
+.loyalty-name{
+  font-family:var(--serif);
+  font-size:22px;
+  font-weight:400;
+  color:var(--on-dark);
+}
+.loyalty-right{text-align:right;}
+.loyalty-pts-num{
+  font-family:var(--serif);
+  font-size:42px;
+  font-weight:300;
+  color:var(--on-dark);
+  line-height:1;
+}
+.loyalty-pts-label{
+  font-size:11px;
+  color:var(--on-dark-60);
+  letter-spacing:.8px;
+  text-transform:uppercase;
+}
+.loyalty-progress-wrap{margin-top:4px;}
+.loyalty-progress-label{
+  display:flex;
+  justify-content:space-between;
+  font-size:10px;
+  color:var(--on-dark-60);
+  margin-bottom:6px;
+}
+.loyalty-bar-track{
+  height:3px;
+  background:rgba(239,233,220,.15);
+  border-radius:2px;
+  overflow:hidden;
+}
+.loyalty-bar-fill{
+  height:100%;
+  background:linear-gradient(90deg,#C8852A,#E6AA4A);
+  border-radius:2px;
+  transition:width .6s ease;
+}
+
+/* ---- UPCOMING CARD ---- */
+.upcoming-card{
+  margin:0 20px 20px;
+  background:var(--card);
+  border-radius:16px;
+  padding:16px;
+  border:1px solid var(--line);
+}
+.upcoming-eyebrow{
+  font-size:10px;
+  font-weight:500;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  color:var(--accent);
+  margin-bottom:8px;
+}
+.upcoming-service{
+  font-family:var(--serif);
+  font-size:18px;
+  color:var(--olive);
+  margin-bottom:4px;
+}
+.upcoming-time{
+  font-size:13px;
+  color:var(--ink-60);
+  margin-bottom:10px;
+}
+.upcoming-link{
+  font-size:12px;
+  font-weight:500;
+  color:var(--accent);
+  cursor:pointer;
+  text-decoration:underline;
+  text-underline-offset:2px;
+}
+
+/* ---- QUICK ACTIONS ---- */
+.quick-grid{
+  margin:0 20px 20px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+.quick-btn{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:18px 16px;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:10px;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  transition:background .15s;
+}
+.quick-btn:active{background:var(--cream-deep);}
+.quick-icon{
+  width:36px;height:36px;
+  border-radius:10px;
+  background:var(--cream-deep);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--olive);
+}
+.quick-label{
+  font-size:13px;
+  font-weight:500;
+  color:var(--ink);
+}
+
+/* ---- RECENT VISIT CARD ---- */
+.recent-card{
+  margin:0 20px 20px;
+  background:var(--card);
+  border-radius:16px;
+  padding:16px;
+  border:1px solid var(--line);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.recent-left{}
+.recent-label{
+  font-size:10px;
+  font-weight:500;
+  letter-spacing:1.2px;
+  text-transform:uppercase;
+  color:var(--ink-40);
+  margin-bottom:4px;
+}
+.recent-service{
+  font-size:14px;
+  font-weight:500;
+  color:var(--ink);
+  margin-bottom:2px;
+}
+.recent-date{font-size:12px;color:var(--ink-60);}
+.recent-right{text-align:right;}
+.recent-price{
+  font-family:var(--serif);
+  font-size:18px;
+  color:var(--olive);
+  margin-bottom:4px;
+}
+.star-row{display:flex;gap:2px;color:#C8852A;font-size:12px;justify-content:flex-end;}
+
+/* ---- VISITS SCREEN ---- */
+.visits-header{
+  padding:56px 20px 16px;
+  flex-shrink:0;
+}
+.visits-title{
+  font-family:var(--serif);
+  font-size:26px;
+  color:var(--olive);
+  margin-bottom:16px;
+}
+.filter-pills{
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  scrollbar-width:none;
+  padding-bottom:2px;
+}
+.filter-pills::-webkit-scrollbar{display:none;}
+.filter-pill{
+  flex-shrink:0;
+  height:32px;
+  padding:0 14px;
+  border-radius:16px;
+  border:1px solid var(--line);
+  background:transparent;
+  font-family:var(--sans);
+  font-size:12px;
+  font-weight:500;
+  color:var(--ink-60);
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  transition:background .15s, color .15s, border-color .15s;
+}
+.filter-pill.active{
+  background:var(--olive);
+  color:var(--on-dark);
+  border-color:var(--olive);
+}
+.visits-list{padding:0 20px;}
+.visit-card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:14px 16px;
+  margin-bottom:10px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.visit-dot{
+  width:10px;height:10px;
+  border-radius:50%;
+  flex-shrink:0;
+}
+.visit-info{flex:1;min-width:0;}
+.visit-service{
+  font-size:14px;
+  font-weight:500;
+  color:var(--ink);
+  margin-bottom:2px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.visit-meta{font-size:11px;color:var(--ink-60);margin-bottom:4px;}
+.visit-stars{display:flex;gap:2px;color:#C8852A;font-size:11px;}
+.visit-right{text-align:right;flex-shrink:0;}
+.visit-price{
+  font-family:var(--serif);
+  font-size:17px;
+  color:var(--olive);
+  margin-bottom:6px;
+}
+.book-again-btn{
+  font-size:11px;
+  font-weight:500;
+  color:var(--accent);
+  cursor:pointer;
+  white-space:nowrap;
+}
+.visits-footer{
+  padding:12px 20px 20px;
+  font-size:12px;
+  color:var(--ink-60);
+  text-align:center;
+  flex-shrink:0;
+}
+
+/* ---- PROMOS SCREEN ---- */
+.promos-header{
+  padding:56px 20px 16px;
+  flex-shrink:0;
+}
+.promos-title{
+  font-family:var(--serif);
+  font-size:26px;
+  color:var(--olive);
+  margin-bottom:4px;
+}
+.promos-sub{font-size:13px;color:var(--ink-60);}
+.promos-list{padding:0 20px;}
+.promo-card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:16px;
+  margin-bottom:12px;
+  overflow:hidden;
+  display:flex;
+}
+.promo-strip{width:5px;flex-shrink:0;}
+.promo-body{
+  flex:1;
+  padding:16px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.promo-title{
+  font-family:var(--serif);
+  font-size:19px;
+  color:var(--olive);
+  line-height:1.2;
+}
+.promo-desc{font-size:12px;color:var(--ink-60);line-height:1.5;}
+.promo-code-row{display:flex;align-items:center;gap:8px;margin-top:2px;}
+.promo-code{
+  display:inline-block;
+  padding:4px 10px;
+  border:1.5px dashed var(--line);
+  border-radius:6px;
+  font-family:monospace;
+  font-size:12px;
+  font-weight:600;
+  color:var(--ink);
+  letter-spacing:1px;
+}
+.promo-expiry{
+  font-size:10px;
+  font-weight:500;
+  letter-spacing:.8px;
+  text-transform:uppercase;
+  color:var(--ink-40);
+}
+.promo-claim{
+  align-self:flex-start;
+  margin-top:4px;
+  height:32px;
+  padding:0 16px;
+  border-radius:16px;
+  border:1px solid var(--olive);
+  background:transparent;
+  font-family:var(--sans);
+  font-size:12px;
+  font-weight:500;
+  color:var(--olive);
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  transition:background .15s, color .15s;
+}
+.promo-claim:active{background:var(--olive);color:var(--on-dark);}
+.points-info-card{
+  margin:4px 20px 20px;
+  background:var(--cream-deep);
+  border-radius:14px;
+  padding:14px 16px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.points-info-icon{
+  width:36px;height:36px;
+  border-radius:10px;
+  background:var(--olive);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+}
+.points-info-text{font-size:13px;color:var(--ink-60);line-height:1.5;}
+.points-info-text strong{color:var(--olive);font-weight:500;}
+
+/* ---- PROFILE SCREEN ---- */
+.profile-header{
+  padding:56px 20px 16px;
+  flex-shrink:0;
+}
+.profile-title{
+  font-family:var(--serif);
+  font-size:26px;
+  color:var(--olive);
+}
+.profile-hero{
+  padding:8px 20px 24px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8px;
+  flex-shrink:0;
+}
+.avatar{
+  width:64px;height:64px;
+  border-radius:50%;
+  background:var(--olive);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:var(--serif);
+  font-size:28px;
+  color:var(--on-dark);
+  flex-shrink:0;
+}
+.profile-name{
+  font-family:var(--serif);
+  font-size:22px;
+  color:var(--olive);
+  text-align:center;
+}
+.profile-contact{font-size:13px;color:var(--ink-60);text-align:center;}
+.stats-row{
+  display:flex;
+  gap:8px;
+  padding:0 20px;
+  margin-bottom:20px;
+  flex-shrink:0;
+}
+.stat-chip{
+  flex:1;
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:10px 8px;
+  text-align:center;
+}
+.stat-num{
+  font-family:var(--serif);
+  font-size:18px;
+  color:var(--olive);
+  line-height:1;
+}
+.stat-lbl{
+  font-size:9px;
+  font-weight:500;
+  letter-spacing:.8px;
+  text-transform:uppercase;
+  color:var(--ink-40);
+  margin-top:3px;
+}
+.menu-list{
+  padding:0 20px;
+  flex:1;
+}
+.menu-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:15px 0;
+  border-bottom:1px solid var(--line);
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+.menu-item:last-child{border-bottom:none;}
+.menu-item-left{display:flex;align-items:center;gap:12px;}
+.menu-item-label{font-size:14px;color:var(--ink);}
+.menu-item-label.danger{color:#c0392b;}
+.menu-chevron{color:var(--ink-40);}
+
+/* ---- EDIT PROFILE PANEL ---- */
+.edit-panel{
+  position:absolute;
+  inset:0;
+  background:var(--cream);
+  z-index:300;
+  transform:translateY(100%);
+  transition:transform .35s cubic-bezier(.4,0,.2,1);
+  display:flex;
+  flex-direction:column;
+  padding:60px 24px 40px;
+  overflow-y:auto;
+}
+.edit-panel.open{transform:translateY(0);}
+.edit-panel-title{
+  font-family:var(--serif);
+  font-size:24px;
+  color:var(--olive);
+  margin-bottom:24px;
+}
+.edit-panel-close{
+  position:absolute;
+  top:16px;right:16px;
+  width:36px;height:36px;
+  border-radius:50%;
+  background:var(--cream-deep);
+  border:none;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--ink);
+  -webkit-tap-highlight-color:transparent;
+}
+
+/* ---- NOTIF PREFS PANEL ---- */
+.pref-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:16px 0;
+  border-bottom:1px solid var(--line);
+}
+.pref-label{font-size:14px;color:var(--ink);}
+.pref-sub{font-size:12px;color:var(--ink-60);}
+.toggle{
+  width:44px;height:24px;
+  border-radius:12px;
+  background:var(--line);
+  position:relative;
+  cursor:pointer;
+  transition:background .25s;
+  flex-shrink:0;
+}
+.toggle.on{background:var(--olive);}
+.toggle-knob{
+  position:absolute;
+  top:2px;left:2px;
+  width:20px;height:20px;
+  border-radius:50%;
+  background:#fff;
+  transition:transform .25s;
+  box-shadow:0 1px 4px rgba(0,0,0,.2);
+}
+.toggle.on .toggle-knob{transform:translateX(20px);}
+
+/* ---- TOAST ---- */
+.toast-container{
+  position:absolute;
+  bottom:96px;left:50%;
+  transform:translateX(-50%);
+  z-index:9999;
+  pointer-events:none;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8px;
+}
+.toast{
+  background:var(--olive);
+  color:var(--on-dark);
+  padding:10px 20px;
+  border-radius:24px;
+  font-size:13px;
+  font-weight:500;
+  white-space:nowrap;
+  box-shadow:0 4px 20px rgba(0,0,0,.3);
+  animation:toastIn .3s ease forwards;
+  opacity:0;
+}
+.toast.out{animation:toastOut .3s ease forwards;}
+@keyframes toastIn{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes toastOut{from{transform:translateY(0);opacity:1}to{transform:translateY(16px);opacity:0}}
+
+/* ---- MOBILE FULL SCREEN ---- */
+@media(max-width:430px){
+  .device-wrap{padding:0;background:var(--cream);min-height:100dvh;align-items:flex-start;}
+  .device{width:100%;height:100dvh;border-radius:0;box-shadow:none;}
+  .device-island{display:none;}
+  .status-bar{display:none;}
+  .screen-header,.home-topbar,.visits-header,.promos-header,.profile-header{padding-top:16px;}
+  .onboard-inner{padding-top:24px;}
+  .tab-bar{padding-bottom:env(safe-area-inset-bottom,16px);}
+}
+
+/* Tabs with tab bar offset */
+.tab-content{
+  display:flex;
+  flex-direction:column;
+  position:absolute;
+  inset:0;
+}
+.tab-main{
+  flex:1;
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+  padding-bottom:82px;
+}
+.tab-main::-webkit-scrollbar{display:none;}
+
+/* Help info */
+.help-info{
+  margin:0 20px;
+  background:var(--cream-deep);
+  border-radius:14px;
+  padding:16px;
+  margin-bottom:12px;
+}
+.help-title{
+  font-family:var(--serif);
+  font-size:17px;
+  color:var(--olive);
+  margin-bottom:8px;
+}
+.help-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:13px;
+  color:var(--ink-60);
+  margin-bottom:4px;
+}
+.help-row svg{color:var(--olive);flex-shrink:0;}
+</style>
+</head>
+<body>
+
+<div class="device-wrap">
+  <div class="device" id="device">
+
+    <!-- Dynamic Island -->
+    <div class="device-island"></div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <div class="status-time">9:41</div>
+      <div class="status-icons">
+        <!-- Signal bars -->
+        <svg width="17" height="12" viewBox="0 0 17 12" fill="none" xmlns="http://www.w3.org/2000/svg" style="color:var(--ink)">
+          <rect x="0" y="6" width="3" height="6" rx="1" fill="currentColor"/>
+          <rect x="4.5" y="4" width="3" height="8" rx="1" fill="currentColor"/>
+          <rect x="9" y="2" width="3" height="10" rx="1" fill="currentColor"/>
+          <rect x="13.5" y="0" width="3" height="12" rx="1" fill="currentColor"/>
+        </svg>
+        <!-- Wifi -->
+        <svg width="16" height="12" viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg" style="color:var(--ink)">
+          <path d="M8 9.5a1 1 0 1 1 0 2 1 1 0 0 1 0-2z" fill="currentColor"/>
+          <path d="M5.05 7.05a4.15 4.15 0 0 1 5.9 0" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+          <path d="M2.93 4.93a7 7 0 0 1 10.14 0" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+          <path d="M0.9 2.9a9.85 9.85 0 0 1 14.2 0" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+        </svg>
+        <!-- Battery -->
+        <svg width="25" height="12" viewBox="0 0 25 12" fill="none" xmlns="http://www.w3.org/2000/svg" style="color:var(--ink)">
+          <rect x="0.5" y="0.5" width="21" height="11" rx="3.5" stroke="currentColor" stroke-opacity=".35"/>
+          <rect x="2" y="2" width="17" height="8" rx="2" fill="currentColor"/>
+          <path d="M23 4v4a2 2 0 0 0 0-4z" fill="currentColor" fill-opacity=".4"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- App Container -->
+    <div class="app-container" id="appContainer">
+
+      <!-- ===== SPLASH ===== -->
+      <div class="screen active" id="s-splash" style="display:flex;flex-direction:column;align-items:center;justify-content:center;position:absolute;inset:0;transform:none;opacity:1;z-index:10;">
+        <img src="Logo%2C%20Price%2C%20Address%2C/recoverylogo.jpg" alt="Recovery Iloilo" class="splash-logo" onerror="this.style.display='none';this.nextElementSibling.style.marginTop='0'">
+        <div class="splash-wordmark">Recovery Iloilo</div>
+        <div class="splash-tagline">Massage &middot; Therapy &middot; Pamper</div>
+        <div class="splash-bar-track">
+          <div class="splash-bar-fill" id="splashBar"></div>
+        </div>
+      </div>
+
+      <!-- ===== ONBOARDING ===== -->
+      <div class="screen" id="s-onboard" style="display:flex;flex-direction:column;">
+        <div class="onboard-inner">
+          <div class="onboard-slides">
+            <!-- Slide 1 -->
+            <div class="onboard-slide active" id="slide-0">
+              <div class="slide-illus">
+                <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="32" cy="32" r="18" stroke="#2C2416" stroke-width="1.5" fill="none"/>
+                  <path d="M32 14 C32 14, 40 22, 40 32 C40 42, 32 50, 32 50 C32 50, 24 42, 24 32 C24 22, 32 14, 32 14z" stroke="#8A4A1A" stroke-width="1.5" fill="none"/>
+                  <line x1="14" y1="32" x2="50" y2="32" stroke="#2C2416" stroke-width="1.5"/>
+                </svg>
+              </div>
+              <div class="slide-heading">Your wellness,<br>tracked.</div>
+              <div class="slide-body">Every visit, every service — all in one place.</div>
+            </div>
+            <!-- Slide 2 -->
+            <div class="onboard-slide" id="slide-1">
+              <div class="slide-illus">
+                <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="14" y="20" width="36" height="28" rx="4" stroke="#2C2416" stroke-width="1.5" fill="none"/>
+                  <path d="M22 20V16" stroke="#2C2416" stroke-width="1.5" stroke-linecap="round"/>
+                  <path d="M42 20V16" stroke="#2C2416" stroke-width="1.5" stroke-linecap="round"/>
+                  <path d="M14 29h36" stroke="#2C2416" stroke-width="1.5"/>
+                  <path d="M24 36h16M28 41h8" stroke="#8A4A1A" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div class="slide-heading">Exclusive promos,<br>just for you.</div>
+              <div class="slide-body">Members get early access to deals and loyalty rewards.</div>
+            </div>
+            <!-- Slide 3 -->
+            <div class="onboard-slide" id="slide-2">
+              <div class="slide-illus">
+                <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="20" y="10" width="24" height="44" rx="5" stroke="#2C2416" stroke-width="1.5" fill="none"/>
+                  <line x1="20" y1="18" x2="44" y2="18" stroke="#2C2416" stroke-width="1.5"/>
+                  <line x1="20" y1="46" x2="44" y2="46" stroke="#2C2416" stroke-width="1.5"/>
+                  <circle cx="32" cy="50" r="2" fill="#8A4A1A"/>
+                  <path d="M27 30h10M27 35h7" stroke="#8A4A1A" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div class="slide-heading">Book anytime.<br>Anywhere.</div>
+              <div class="slide-body">Request appointments directly from the app.</div>
+            </div>
+          </div>
+        </div>
+        <div class="onboard-nav">
+          <div class="dots">
+            <div class="dot active" id="dot-0"></div>
+            <div class="dot" id="dot-1"></div>
+            <div class="dot" id="dot-2"></div>
+          </div>
+          <div class="onboard-arrows">
+            <button class="arrow-btn" id="backBtn" onclick="onboardNav(-1)" disabled>
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12.5 5L7.5 10l5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <button class="btn-primary" id="nextBtn" onclick="onboardNav(1)" style="display:none;"></button>
+            <button class="btn-primary" id="getStartedBtn" onclick="showScreen('s-auth','forward')" style="display:flex;">Get Started</button>
+            <button class="arrow-btn" id="fwdBtn" onclick="onboardNav(1)">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M7.5 5L12.5 10l-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+          <div class="onboard-signin">Already have an account? <span onclick="showScreen('s-auth','forward');setAuthTab('signin')">Sign In</span></div>
+        </div>
+      </div>
+
+      <!-- ===== AUTH ===== -->
+      <div class="screen" id="s-auth" style="display:flex;flex-direction:column;">
+        <div class="auth-inner">
+          <img src="Logo%2C%20Price%2C%20Address%2C/recoverylogo.jpg" alt="Logo" class="auth-logo" onerror="this.style.display='none'">
+          <div class="auth-title">Welcome</div>
+          <div class="auth-sub">Sign in or create an account to continue.</div>
+          <div class="auth-tabs">
+            <div class="auth-tab active" id="tab-signin" onclick="setAuthTab('signin')">Sign In</div>
+            <div class="auth-tab" id="tab-register" onclick="setAuthTab('register')">Register</div>
+          </div>
+
+          <!-- Sign In Form -->
+          <div class="auth-form active" id="form-signin">
+            <div class="form-group">
+              <label class="form-label">Name or Phone</label>
+              <input class="form-input" type="text" id="si-contact" placeholder="Maria or 09171234567">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Password</label>
+              <input class="form-input" type="password" id="si-password" placeholder="Your password">
+            </div>
+            <div class="form-error" id="si-error">Please fill in all fields.</div>
+            <button class="btn-primary" onclick="signIn()">Sign In</button>
+            <button class="btn-demo" onclick="tryDemo()">Try Demo Account</button>
+          </div>
+
+          <!-- Register Form -->
+          <div class="auth-form" id="form-register">
+            <div class="form-group">
+              <label class="form-label">Full Name</label>
+              <input class="form-input" type="text" id="reg-name" placeholder="Maria Santos">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Phone or Email</label>
+              <input class="form-input" type="text" id="reg-contact" placeholder="09171234567">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Password</label>
+              <input class="form-input" type="password" id="reg-password" placeholder="Create a password">
+            </div>
+            <div class="form-error" id="reg-error">Please fill in all fields.</div>
+            <button class="btn-primary" onclick="register()">Create Account</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== HOME (tab) ===== -->
+      <div class="screen tab-screen" id="s-home" style="display:flex;flex-direction:column;">
+        <div class="tab-content">
+          <div class="tab-main" id="home-main">
+            <div class="home-topbar">
+              <div class="home-greeting" id="homeGreeting">Good morning!</div>
+              <div class="notif-btn" onclick="showToast('2 new notifications')">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="color:var(--olive)">
+                  <path d="M10 2a6 6 0 0 0-6 6v3l-1.5 2.5h15L16 11V8a6 6 0 0 0-6-6z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" fill="none"/>
+                  <path d="M8.5 16.5a1.5 1.5 0 0 0 3 0" stroke="currentColor" stroke-width="1.3" fill="none"/>
+                </svg>
+                <div class="notif-badge">2</div>
+              </div>
+            </div>
+
+            <!-- Loyalty Card -->
+            <div class="loyalty-card" id="loyaltyCard">
+              <div class="loyalty-watermark">Recovery Iloilo</div>
+              <div class="loyalty-top">
+                <div class="loyalty-left">
+                  <div class="loyalty-ri-label">Recovery Iloilo</div>
+                  <div class="tier-badge tier-Gold" id="tierBadge">Gold</div>
+                  <div class="loyalty-name" id="loyaltyName">Maria Santos</div>
+                </div>
+                <div class="loyalty-right">
+                  <div class="loyalty-pts-num" id="loyaltyPts">240</div>
+                  <div class="loyalty-pts-label">pts</div>
+                </div>
+              </div>
+              <div class="loyalty-progress-wrap">
+                <div class="loyalty-progress-label">
+                  <span id="progressLabel">240 / 500 pts to Platinum</span>
+                  <span id="progressPct">48%</span>
+                </div>
+                <div class="loyalty-bar-track">
+                  <div class="loyalty-bar-fill" id="loyaltyBar" style="width:48%"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Upcoming Appointment -->
+            <div class="upcoming-card" id="upcomingCard" style="display:none;">
+              <div class="upcoming-eyebrow">Upcoming</div>
+              <div class="upcoming-service">Swedish Massage &middot; Body</div>
+              <div class="upcoming-time">Wed, June 4 &middot; 3:00 PM</div>
+              <div class="upcoming-link" onclick="showToast('Appointment details coming soon')">View Details</div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="section-pad" style="margin-bottom:8px;">
+              <div class="section-title">Quick Actions</div>
+            </div>
+            <div class="quick-grid">
+              <div class="quick-btn" onclick="showToast('Booking coming soon')">
+                <div class="quick-icon">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="3" y="4" width="14" height="14" rx="3" stroke="currentColor" stroke-width="1.3"/><path d="M7 2v4M13 2v4M3 9h14" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                </div>
+                <div class="quick-label">Book Now</div>
+              </div>
+              <div class="quick-btn" onclick="switchToTab('visits')">
+                <div class="quick-icon">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 6h12M4 10h12M4 14h8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                </div>
+                <div class="quick-label">My Services</div>
+              </div>
+              <div class="quick-btn" onclick="switchToTab('promos')">
+                <div class="quick-icon">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 10L10 3l7 7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M5 8v7a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V8" stroke="currentColor" stroke-width="1.3"/><path d="M9 16v-5h2v5" stroke="currentColor" stroke-width="1.3"/></svg>
+                </div>
+                <div class="quick-label">Promos</div>
+              </div>
+              <div class="quick-btn" onclick="showToast('Share link copied!')">
+                <div class="quick-icon">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="7" r="3" stroke="currentColor" stroke-width="1.3"/><path d="M4 17c0-3.314 2.686-5 6-5s6 1.686 6 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><path d="M15 4l2 2-2 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 6h-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                </div>
+                <div class="quick-label">Refer Friend</div>
+              </div>
+            </div>
+
+            <!-- Recent Visit -->
+            <div class="section-pad" style="margin-bottom:8px;margin-top:4px;">
+              <div class="section-title">Recent Visit</div>
+            </div>
+            <div class="recent-card">
+              <div class="recent-left">
+                <div class="recent-label">Last Visit</div>
+                <div class="recent-service">Swedish Massage</div>
+                <div class="recent-date">June 1, 2026</div>
+              </div>
+              <div class="recent-right">
+                <div class="recent-price">&#8369;649</div>
+                <div class="star-row">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="#C8852A"><path d="M6 1l1.3 2.8L10.5 4l-2.2 2.2.5 3.3L6 8l-2.8 1.5.5-3.3L1.5 4l3.2-.2z"/></svg>
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="#C8852A"><path d="M6 1l1.3 2.8L10.5 4l-2.2 2.2.5 3.3L6 8l-2.8 1.5.5-3.3L1.5 4l3.2-.2z"/></svg>
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="#C8852A"><path d="M6 1l1.3 2.8L10.5 4l-2.2 2.2.5 3.3L6 8l-2.8 1.5.5-3.3L1.5 4l3.2-.2z"/></svg>
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="#C8852A"><path d="M6 1l1.3 2.8L10.5 4l-2.2 2.2.5 3.3L6 8l-2.8 1.5.5-3.3L1.5 4l3.2-.2z"/></svg>
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="#C8852A"><path d="M6 1l1.3 2.8L10.5 4l-2.2 2.2.5 3.3L6 8l-2.8 1.5.5-3.3L1.5 4l3.2-.2z"/></svg>
+                </div>
+              </div>
+            </div>
+            <div style="height:16px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== VISITS (tab) ===== -->
+      <div class="screen tab-screen" id="s-visits" style="display:flex;flex-direction:column;">
+        <div class="tab-content">
+          <div class="tab-main">
+            <div class="visits-header">
+              <div class="visits-title">My Visits</div>
+              <div class="filter-pills">
+                <button class="filter-pill active" onclick="filterVisits('all',this)">All</button>
+                <button class="filter-pill" onclick="filterVisits('body',this)">Body</button>
+                <button class="filter-pill" onclick="filterVisits('face',this)">Face</button>
+                <button class="filter-pill" onclick="filterVisits('recovery',this)">Recovery</button>
+              </div>
+            </div>
+            <div class="visits-list" id="visitsList"></div>
+            <div class="visits-footer" id="visitsFooter">4 visits &middot; &#8369;3,196 total spent</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== PROMOS (tab) ===== -->
+      <div class="screen tab-screen" id="s-promos" style="display:flex;flex-direction:column;">
+        <div class="tab-content">
+          <div class="tab-main">
+            <div class="promos-header">
+              <div class="promos-title">Promos &amp; Offers</div>
+              <div class="promos-sub">Exclusive rewards for Recovery members.</div>
+            </div>
+            <div class="promos-list">
+
+              <div class="promo-card">
+                <div class="promo-strip" style="background:#C8852A;"></div>
+                <div class="promo-body">
+                  <div class="promo-title">Free Foot Spa on your 5th visit</div>
+                  <div class="promo-desc">Loyalty Reward &mdash; Redeem on your 5th completed visit.</div>
+                  <div class="promo-code-row">
+                    <div class="promo-code">LOYAL5TH</div>
+                    <div class="promo-expiry">After 5 visits &middot; No expiry</div>
+                  </div>
+                  <button class="promo-claim" onclick="copyPromoCode('LOYAL5TH')">Claim</button>
+                </div>
+              </div>
+
+              <div class="promo-card">
+                <div class="promo-strip" style="background:#C0748A;"></div>
+                <div class="promo-body">
+                  <div class="promo-title">15% off in your birthday month</div>
+                  <div class="promo-desc">Birthday Month &mdash; Valid on all services during your birth month.</div>
+                  <div class="promo-code-row">
+                    <div class="promo-code">BDAY15</div>
+                    <div class="promo-expiry">Valid in your birth month</div>
+                  </div>
+                  <button class="promo-claim" onclick="copyPromoCode('BDAY15')">Claim</button>
+                </div>
+              </div>
+
+              <div class="promo-card">
+                <div class="promo-strip" style="background:#2C6B2F;"></div>
+                <div class="promo-body">
+                  <div class="promo-title">Give &#8369;100 off &middot; Get &#8369;100 credit</div>
+                  <div class="promo-desc">Refer a Friend &mdash; Share your code and both of you get rewarded.</div>
+                  <div class="promo-code-row">
+                    <div class="promo-code">REFER100</div>
+                    <div class="promo-expiry">Ongoing</div>
+                  </div>
+                  <button class="promo-claim" onclick="copyPromoCode('REFER100')">Claim</button>
+                </div>
+              </div>
+
+              <div class="promo-card">
+                <div class="promo-strip" style="background:#8A4A1A;"></div>
+                <div class="promo-body">
+                  <div class="promo-title">Weekend Special &mdash; Save 10%</div>
+                  <div class="promo-desc">Book any 2 services on Saturday&ndash;Sunday and save 10%.</div>
+                  <div class="promo-code-row">
+                    <div class="promo-code">WKND10</div>
+                    <div class="promo-expiry">Every Saturday &amp; Sunday</div>
+                  </div>
+                  <button class="promo-claim" onclick="copyPromoCode('WKND10')">Claim</button>
+                </div>
+              </div>
+
+              <div class="promo-card">
+                <div class="promo-strip" style="background:#6B6353;"></div>
+                <div class="promo-body">
+                  <div class="promo-title">10% off your very first visit</div>
+                  <div class="promo-desc">First Timer &mdash; Welcome gift for new Recovery Iloilo clients.</div>
+                  <div class="promo-code-row">
+                    <div class="promo-code">FIRST10</div>
+                    <div class="promo-expiry">One-time use</div>
+                  </div>
+                  <button class="promo-claim" onclick="copyPromoCode('FIRST10')">Claim</button>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="points-info-card">
+              <div class="points-info-icon">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="color:var(--on-dark)">
+                  <circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.3"/>
+                  <path d="M10 7v3l2 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div class="points-info-text">
+                <strong id="promoPoints">You have 240 pts</strong><br>
+                Redeem for discounts on your next visit.
+              </div>
+            </div>
+            <div style="height:16px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== PROFILE (tab) ===== -->
+      <div class="screen tab-screen" id="s-profile" style="display:flex;flex-direction:column;">
+        <div class="tab-content">
+          <div class="tab-main">
+            <div class="profile-header">
+              <div class="profile-title">Profile</div>
+            </div>
+            <div class="profile-hero">
+              <div class="avatar" id="profileAvatar">MS</div>
+              <div class="profile-name" id="profileName">Maria Santos</div>
+              <div class="profile-contact" id="profileContact">09171234567</div>
+            </div>
+            <div class="stats-row">
+              <div class="stat-chip">
+                <div class="stat-num" id="statVisits">4</div>
+                <div class="stat-lbl">Visits</div>
+              </div>
+              <div class="stat-chip">
+                <div class="stat-num" id="statPts">240</div>
+                <div class="stat-lbl">Points</div>
+              </div>
+              <div class="stat-chip">
+                <div class="stat-num" id="statTier">Gold</div>
+                <div class="stat-lbl">Tier</div>
+              </div>
+            </div>
+            <div class="menu-list">
+
+              <div class="menu-item" onclick="openEditProfile()">
+                <div class="menu-item-left">
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style="color:var(--ink-60)"><path d="M13 3l2 2-9 9H4v-2L13 3z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+                  <span class="menu-item-label">Edit Profile</span>
+                </div>
+                <svg class="menu-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+
+              <div class="menu-item" onclick="openNotifPrefs()">
+                <div class="menu-item-left">
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style="color:var(--ink-60)"><path d="M9 2a5 5 0 0 0-5 5v2.5L2.5 12h13L14 9.5V7a5 5 0 0 0-5-5z" stroke="currentColor" stroke-width="1.3"/><path d="M7.5 14.5a1.5 1.5 0 0 0 3 0" stroke="currentColor" stroke-width="1.3" fill="none"/></svg>
+                  <span class="menu-item-label">Notification Preferences</span>
+                </div>
+                <svg class="menu-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+
+              <div class="menu-item" onclick="switchToTab('visits')">
+                <div class="menu-item-left">
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style="color:var(--ink-60)"><rect x="2" y="3" width="14" height="13" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M6 1v4M12 1v4M2 8h14" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                  <span class="menu-item-label">Appointment History</span>
+                </div>
+                <svg class="menu-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+
+              <div class="menu-item" onclick="openHelp()">
+                <div class="menu-item-left">
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style="color:var(--ink-60)"><circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.3"/><path d="M9 13v-1M9 10c0-1.5 2-1.5 2-3a2 2 0 1 0-4 0" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                  <span class="menu-item-label">Help &amp; Support</span>
+                </div>
+                <svg class="menu-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+
+              <div class="menu-item" onclick="openAbout()">
+                <div class="menu-item-left">
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style="color:var(--ink-60)"><path d="M9 2L2 6v1h14V6L9 2z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><rect x="3" y="7" width="2" height="7" rx=".5" fill="currentColor" opacity=".4"/><rect x="8" y="7" width="2" height="7" rx=".5" fill="currentColor" opacity=".4"/><rect x="13" y="7" width="2" height="7" rx=".5" fill="currentColor" opacity=".4"/><line x1="2" y1="14" x2="16" y2="14" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                  <span class="menu-item-label">About Recovery Iloilo</span>
+                </div>
+                <svg class="menu-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+
+              <div class="menu-item" onclick="signOut()">
+                <div class="menu-item-left">
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style="color:#c0392b"><path d="M7 9h7M12 7l2 2-2 2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 4H4a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+                  <span class="menu-item-label danger">Sign Out</span>
+                </div>
+                <svg class="menu-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </div>
+
+            </div>
+            <div style="height:16px;"></div>
+          </div>
+        </div>
+
+        <!-- Edit Profile Panel -->
+        <div class="edit-panel" id="editPanel">
+          <button class="edit-panel-close" onclick="closeEditProfile()">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </button>
+          <div class="edit-panel-title">Edit Profile</div>
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <div class="form-group">
+              <label class="form-label">Full Name</label>
+              <input class="form-input" type="text" id="edit-name" placeholder="Your name">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Phone or Email</label>
+              <input class="form-input" type="text" id="edit-contact" placeholder="09171234567">
+            </div>
+            <button class="btn-primary" onclick="saveProfile()">Save Changes</button>
+          </div>
+        </div>
+
+        <!-- Notif Prefs Panel -->
+        <div class="edit-panel" id="notifPanel">
+          <button class="edit-panel-close" onclick="closeNotifPrefs()">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </button>
+          <div class="edit-panel-title">Notification Preferences</div>
+          <div class="pref-item">
+            <div>
+              <div class="pref-label">SMS Alerts</div>
+              <div class="pref-sub">Appointment reminders via text</div>
+            </div>
+            <div class="toggle on" id="toggle-sms" onclick="togglePref('sms')"><div class="toggle-knob"></div></div>
+          </div>
+          <div class="pref-item">
+            <div>
+              <div class="pref-label">Promo Emails</div>
+              <div class="pref-sub">Exclusive offers and updates</div>
+            </div>
+            <div class="toggle on" id="toggle-email" onclick="togglePref('email')"><div class="toggle-knob"></div></div>
+          </div>
+          <div class="pref-item">
+            <div>
+              <div class="pref-label">Loyalty Updates</div>
+              <div class="pref-sub">Points earned and tier changes</div>
+            </div>
+            <div class="toggle" id="toggle-loyalty" onclick="togglePref('loyalty')"><div class="toggle-knob"></div></div>
+          </div>
+        </div>
+
+        <!-- Help Panel -->
+        <div class="edit-panel" id="helpPanel">
+          <button class="edit-panel-close" onclick="document.getElementById('helpPanel').classList.remove('open')">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </button>
+          <div class="edit-panel-title">Help &amp; Support</div>
+          <div class="help-info">
+            <div class="help-title">Contact Us</div>
+            <div class="help-row">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="color:var(--olive)"><path d="M3 3h10a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.2"/><path d="M2 4l6 5 6-5" stroke="currentColor" stroke-width="1.2"/></svg>
+              0985 335 9998
+            </div>
+            <div class="help-row">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="color:var(--olive)"><path d="M4 1h8v14l-4-3-4 3V1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+              @recoveryiloilo
+            </div>
+          </div>
+          <div class="help-info">
+            <div class="help-title">Hours</div>
+            <div class="help-row" style="font-size:13px;color:var(--ink-60);">Mon–Sun: 9:00 AM – 9:00 PM</div>
+          </div>
+        </div>
+
+        <!-- About Panel -->
+        <div class="edit-panel" id="aboutPanel">
+          <button class="edit-panel-close" onclick="document.getElementById('aboutPanel').classList.remove('open')">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </button>
+          <div class="edit-panel-title">About Recovery Iloilo</div>
+          <div class="help-info">
+            <div class="help-title">Location</div>
+            <div class="help-row">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="color:var(--olive)"><path d="M8 1.5C5.52 1.5 3.5 3.52 3.5 6c0 3.5 4.5 8.5 4.5 8.5S12.5 9.5 12.5 6c0-2.48-2.02-4.5-4.5-4.5z" stroke="currentColor" stroke-width="1.2"/><circle cx="8" cy="6" r="1.5" fill="currentColor"/></svg>
+              G&amp;R Bldg., M.H. Del Pilar St., Molo, Iloilo City
+            </div>
+          </div>
+          <div class="help-info">
+            <div class="help-title">Our Story</div>
+            <div style="font-size:13px;color:var(--ink-60);line-height:1.6;">Recovery Iloilo is a premium wellness sanctuary offering massage, therapy, and pampering services designed to restore mind, body, and spirit.</div>
+          </div>
+          <div style="margin:0 0 0 0;">
+            <img src="Logo%2C%20Price%2C%20Address%2C/recoverylogo.jpg" alt="Recovery Iloilo" style="width:64px;height:64px;border-radius:16px;object-fit:cover;margin-top:8px;" onerror="this.style.display='none'">
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== TAB BAR ===== -->
+      <div class="tab-bar" id="tabBar" style="display:none;">
+        <div class="tab-item active" id="tab-home" onclick="switchToTab('home')">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" style="color:inherit">
+            <path d="M3 10L11 3l8 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M5 8.5V18a1 1 0 0 0 1 1h4v-4h2v4h4a1 1 0 0 0 1-1V8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="tab-label">Home</span>
+          <div class="tab-dot"></div>
+        </div>
+        <div class="tab-item" id="tab-visits" onclick="switchToTab('visits')">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" style="color:inherit">
+            <rect x="3" y="4" width="16" height="16" rx="3" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M8 2v4M14 2v4M3 10h16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="11" cy="15" r="2.5" stroke="currentColor" stroke-width="1.3"/>
+            <path d="M11 14v1.5l1 .5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+          </svg>
+          <span class="tab-label">Visits</span>
+          <div class="tab-dot"></div>
+        </div>
+        <div class="tab-item" id="tab-promos" onclick="switchToTab('promos')">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" style="color:inherit">
+            <path d="M3 12L12 3l7 7-9 9-7-7z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+            <circle cx="15.5" cy="6.5" r="1.5" fill="currentColor"/>
+            <path d="M8 14l4-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+          </svg>
+          <span class="tab-label">Promos</span>
+          <div class="tab-dot"></div>
+        </div>
+        <div class="tab-item" id="tab-profile" onclick="switchToTab('profile')">
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" style="color:inherit">
+            <circle cx="11" cy="8" r="3.5" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M4 19c0-3.866 3.134-6 7-6s7 2.134 7 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <span class="tab-label">Profile</span>
+          <div class="tab-dot"></div>
+        </div>
+      </div>
+
+      <!-- Toast Container -->
+      <div class="toast-container" id="toastContainer"></div>
+
+    </div><!-- /app-container -->
+  </div><!-- /device -->
+</div><!-- /device-wrap -->
+
+<script>
+// =====================================================================
+// STATE
+// =====================================================================
+let currentUser = null;
+let currentScreen = 's-splash';
+let currentTab = 'home';
+let activeFilter = 'all';
+let onboardSlide = 0;
+const TOTAL_SLIDES = 3;
+
+const MOCK_VISITS = [
+  {id:'V001',date:'2026-06-01',service:'Swedish Massage',category:'body',price:649,therapist:'Ate Mila',rating:5},
+  {id:'V002',date:'2026-05-20',service:'Gel Pedicure',category:'face',price:499,therapist:'Ate Rosa',rating:5},
+  {id:'V003',date:'2026-05-05',service:'Express Head Spa (45 min)',category:'recovery',price:1399,therapist:'Ate Nena',rating:5},
+  {id:'V004',date:'2026-04-18',service:'Thai Massage',category:'body',price:649,therapist:'Ate Mila',rating:4},
+];
+
+const CAT_COLORS = {body:'#8A4A1A', face:'#6B6353', recovery:'#2C6B2F'};
+
+// =====================================================================
+// INIT
+// =====================================================================
+window.addEventListener('DOMContentLoaded', function() {
+  // Splash animation
+  const bar = document.getElementById('splashBar');
+  requestAnimationFrame(() => {
+    bar.style.width = '100%';
+  });
+
+  setTimeout(() => {
+    const saved = localStorage.getItem('ri_mobile_user');
+    if (saved) {
+      try {
+        currentUser = JSON.parse(saved);
+        afterAuth();
+      } catch(e) {
+        showScreen('s-onboard', 'forward');
+      }
+    } else {
+      showScreen('s-onboard', 'forward');
+    }
+  }, 1850);
+
+  updateOnboardUI();
+});
+
+// =====================================================================
+// SCREEN TRANSITIONS
+// =====================================================================
+function showScreen(id, direction) {
+  const prev = document.getElementById(currentScreen);
+  const next = document.getElementById(id);
+  if (!next || id === currentScreen) return;
+
+  // Remove all transition classes first
+  const allScreens = document.querySelectorAll('.screen:not(.tab-screen)');
+  allScreens.forEach(s => {
+    s.classList.remove('active','exit-left','exit-right');
+    s.style.zIndex = '';
+  });
+
+  if (direction === 'forward') {
+    // New comes from right
+    next.style.transform = 'translateX(100%)';
+    next.style.opacity = '0';
+    next.style.zIndex = '10';
+    prev.style.zIndex = '5';
+
+    requestAnimationFrame(() => {
+      next.classList.add('active');
+      prev.classList.add('exit-left');
+    });
+  } else {
+    // New comes from left (back)
+    next.style.transform = 'translateX(-100%)';
+    next.style.opacity = '0';
+    next.style.zIndex = '10';
+    prev.style.zIndex = '5';
+
+    requestAnimationFrame(() => {
+      next.classList.add('active');
+      prev.classList.add('exit-right');
+    });
+  }
+
+  // Clean up transition styles after animation
+  setTimeout(() => {
+    prev.classList.remove('exit-left','exit-right');
+    prev.style.transform = '';
+    prev.style.opacity = '';
+    prev.style.zIndex = '';
+    next.style.zIndex = '';
+  }, 400);
+
+  currentScreen = id;
+}
+
+// =====================================================================
+// TAB SWITCHING
+// =====================================================================
+function switchToTab(tabId) {
+  const tabScreens = {
+    home: 's-home',
+    visits: 's-visits',
+    promos: 's-promos',
+    profile: 's-profile'
+  };
+
+  // Deactivate current tab
+  const prevTab = document.getElementById('tab-' + currentTab);
+  const prevScreen = document.getElementById(tabScreens[currentTab]);
+  if (prevTab) prevTab.classList.remove('active');
+  if (prevScreen) {
+    prevScreen.classList.remove('active');
+    prevScreen.classList.add('exit-left');
+    setTimeout(() => prevScreen.classList.remove('exit-left'), 300);
+  }
+
+  // Activate new tab
+  currentTab = tabId;
+  const newTab = document.getElementById('tab-' + tabId);
+  const newScreen = document.getElementById(tabScreens[tabId]);
+  if (newTab) newTab.classList.add('active');
+  if (newScreen) newScreen.classList.add('active');
+
+  // Special inits
+  if (tabId === 'visits') renderVisits('all');
+  if (tabId === 'home') initHome();
+}
+
+// =====================================================================
+// ONBOARDING
+// =====================================================================
+function onboardNav(dir) {
+  const newSlide = onboardSlide + dir;
+  if (newSlide < 0 || newSlide >= TOTAL_SLIDES) return;
+
+  const curEl = document.getElementById('slide-' + onboardSlide);
+  const nextEl = document.getElementById('slide-' + newSlide);
+
+  curEl.classList.add('exit-slide');
+  curEl.classList.remove('active');
+  setTimeout(() => curEl.classList.remove('exit-slide'), 400);
+
+  nextEl.style.transform = dir > 0 ? 'translateX(60px)' : 'translateX(-60px)';
+  nextEl.style.opacity = '0';
+  requestAnimationFrame(() => {
+    nextEl.classList.add('active');
+    nextEl.style.transform = '';
+    nextEl.style.opacity = '';
+  });
+
+  onboardSlide = newSlide;
+  updateOnboardUI();
+}
+
+function updateOnboardUI() {
+  // Dots
+  for (let i = 0; i < TOTAL_SLIDES; i++) {
+    const dot = document.getElementById('dot-' + i);
+    if (dot) dot.classList.toggle('active', i === onboardSlide);
+  }
+
+  // Back btn
+  const backBtn = document.getElementById('backBtn');
+  if (backBtn) backBtn.disabled = onboardSlide === 0;
+
+  // Forward btn / get started
+  const fwdBtn = document.getElementById('fwdBtn');
+  const getStartedBtn = document.getElementById('getStartedBtn');
+
+  if (onboardSlide === TOTAL_SLIDES - 1) {
+    if (fwdBtn) fwdBtn.style.display = 'none';
+    if (getStartedBtn) getStartedBtn.style.display = 'flex';
+  } else {
+    if (fwdBtn) fwdBtn.style.display = 'flex';
+    if (getStartedBtn) getStartedBtn.style.display = 'none';
+  }
+}
+
+// =====================================================================
+// AUTH
+// =====================================================================
+function setAuthTab(tab) {
+  document.getElementById('tab-signin').classList.toggle('active', tab === 'signin');
+  document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+  document.getElementById('form-signin').classList.toggle('active', tab === 'signin');
+  document.getElementById('form-register').classList.toggle('active', tab === 'register');
+}
+
+function signIn() {
+  const contact = document.getElementById('si-contact').value.trim();
+  const password = document.getElementById('si-password').value.trim();
+  const errorEl = document.getElementById('si-error');
+
+  if (!contact || !password) {
+    errorEl.classList.add('show');
+    errorEl.textContent = 'Please fill in all fields.';
+    return;
+  }
+  errorEl.classList.remove('show');
+
+  // Check localStorage for existing user
+  const saved = localStorage.getItem('ri_mobile_user');
+  if (saved) {
+    const u = JSON.parse(saved);
+    if ((u.contact === contact || u.name === contact) && u.password === password) {
+      currentUser = u;
+      afterAuth();
+      return;
+    }
+  }
+
+  // Generic sign in — create session
+  const nameParts = contact.split(' ');
+  currentUser = {
+    name: nameParts.length > 1 ? contact : contact,
+    contact: contact,
+    password: password,
+    joined: new Date().toISOString(),
+    points: 0,
+    tier: 'Bronze',
+    visits: 0
+  };
+  localStorage.setItem('ri_mobile_user', JSON.stringify(currentUser));
+  afterAuth();
+}
+
+function register() {
+  const name = document.getElementById('reg-name').value.trim();
+  const contact = document.getElementById('reg-contact').value.trim();
+  const password = document.getElementById('reg-password').value.trim();
+  const errorEl = document.getElementById('reg-error');
+
+  if (!name || !contact || !password) {
+    errorEl.classList.add('show');
+    errorEl.textContent = 'Please fill in all fields.';
+    return;
+  }
+  errorEl.classList.remove('show');
+
+  currentUser = {
+    name,
+    contact,
+    password,
+    joined: new Date().toISOString(),
+    points: 0,
+    tier: 'Bronze',
+    visits: 0
+  };
+  localStorage.setItem('ri_mobile_user', JSON.stringify(currentUser));
+  afterAuth();
+}
+
+function tryDemo() {
+  currentUser = {
+    name: 'Maria Santos',
+    contact: '09171234567',
+    password: 'demo',
+    joined: '2026-01-15T00:00:00.000Z',
+    points: 240,
+    tier: 'Gold',
+    visits: 4
+  };
+  localStorage.setItem('ri_mobile_user', JSON.stringify(currentUser));
+  afterAuth();
+}
+
+function signOut() {
+  localStorage.removeItem('ri_mobile_user');
+  currentUser = null;
+
+  // Hide tab bar
+  document.getElementById('tabBar').style.display = 'none';
+
+  // Deactivate all tab screens
+  ['s-home','s-visits','s-promos','s-profile'].forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.remove('active');
+  });
+
+  // Reset tab states
+  currentScreen = 's-profile';
+  showScreen('s-auth', 'back');
+}
+
+function afterAuth() {
+  initHome();
+  renderVisits('all');
+  renderProfile();
+
+  // Show tab bar
+  document.getElementById('tabBar').style.display = 'flex';
+
+  // Show home tab
+  currentTab = '';
+  switchToTab('home');
+
+  // Navigate to home tab screen area
+  // First hide auth/onboard screens
+  ['s-splash','s-onboard','s-auth'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.classList.remove('active');
+      el.style.transform = 'translateX(-100%)';
+      el.style.opacity = '0';
+    }
+  });
+  currentScreen = 's-home';
+}
+
+// =====================================================================
+// HOME INIT
+// =====================================================================
+function initHome() {
+  if (!currentUser) return;
+
+  // Greeting
+  const hour = new Date().getHours();
+  let period = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
+  const firstName = currentUser.name.split(' ')[0];
+  document.getElementById('homeGreeting').textContent = `Good ${period}, ${firstName}!`;
+
+  // Loyalty card
+  const tier = currentUser.tier || 'Bronze';
+  const pts = currentUser.points || 0;
+
+  const tierBadge = document.getElementById('tierBadge');
+  tierBadge.textContent = tier;
+  tierBadge.className = 'tier-badge tier-' + tier;
+
+  document.getElementById('loyaltyName').textContent = currentUser.name;
+  document.getElementById('loyaltyPts').textContent = pts;
+
+  // Progress bar
+  const tierGoals = {Bronze: 100, Silver: 250, Gold: 500, Platinum: 1000};
+  const nextTier = {Bronze:'Silver', Silver:'Gold', Gold:'Platinum', Platinum:'Max'};
+  const goal = tierGoals[tier] || 500;
+  const pct = Math.min(100, Math.round((pts / goal) * 100));
+  document.getElementById('loyaltyBar').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = `${pts} / ${goal} pts to ${nextTier[tier] || 'Max'}`;
+  document.getElementById('progressPct').textContent = pct + '%';
+
+  // Show upcoming card for demo user
+  const isDemo = currentUser.name === 'Maria Santos' && currentUser.tier === 'Gold';
+  const upcomingCard = document.getElementById('upcomingCard');
+  if (upcomingCard) upcomingCard.style.display = isDemo ? 'block' : 'none';
+}
+
+// =====================================================================
+// VISITS
+// =====================================================================
+function filterVisits(cat, btn) {
+  activeFilter = cat;
+  document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderVisits(cat);
+}
+
+function renderVisits(filter) {
+  const container = document.getElementById('visitsList');
+  const footer = document.getElementById('visitsFooter');
+  if (!container) return;
+
+  // Merge with any localStorage visits
+  let visits = [...MOCK_VISITS];
+  try {
+    const extra = JSON.parse(localStorage.getItem('ri_mobile_visits') || '[]');
+    visits = [...visits, ...extra];
+  } catch(e) {}
+
+  const filtered = filter === 'all' ? visits : visits.filter(v => v.category === filter);
+
+  container.innerHTML = filtered.map(v => {
+    const color = CAT_COLORS[v.category] || '#9C9686';
+    const stars = renderStars(v.rating);
+    const dateStr = formatDate(v.date);
+    return `
+      <div class="visit-card">
+        <div class="visit-dot" style="background:${color};"></div>
+        <div class="visit-info">
+          <div class="visit-service">${v.service}</div>
+          <div class="visit-meta">${dateStr} &middot; ${v.therapist}</div>
+          <div class="visit-stars">${stars}</div>
+        </div>
+        <div class="visit-right">
+          <div class="visit-price">&#8369;${v.price.toLocaleString()}</div>
+          <div class="book-again-btn" onclick="showToast('Booking coming soon')">Book Again &rarr;</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Footer
+  const total = filtered.reduce((sum, v) => sum + v.price, 0);
+  footer.innerHTML = `${filtered.length} visit${filtered.length !== 1 ? 's' : ''} &middot; &#8369;${total.toLocaleString()} total spent`;
+}
+
+function renderStars(count) {
+  const filled = `<svg width="12" height="12" viewBox="0 0 12 12" fill="#C8852A"><path d="M6 1l1.3 2.8L10.5 4l-2.2 2.2.5 3.3L6 8l-2.8 1.5.5-3.3L1.5 4l3.2-.2z"/></svg>`;
+  const empty = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1l1.3 2.8L10.5 4l-2.2 2.2.5 3.3L6 8l-2.8 1.5.5-3.3L1.5 4l3.2-.2z" stroke="#C8852A" stroke-width="1"/></svg>`;
+  let out = '';
+  for (let i = 1; i <= 5; i++) out += i <= count ? filled : empty;
+  return out;
+}
+
+function formatDate(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('en-PH', {month:'short', day:'numeric', year:'numeric'});
+}
+
+// =====================================================================
+// PROMOS
+// =====================================================================
+function copyPromoCode(code) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(code).catch(() => {});
+  }
+  showToast('Code ' + code + ' copied!');
+}
+
+// =====================================================================
+// PROFILE
+// =====================================================================
+function renderProfile() {
+  if (!currentUser) return;
+
+  const initials = currentUser.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+  document.getElementById('profileAvatar').textContent = initials;
+  document.getElementById('profileName').textContent = currentUser.name;
+  document.getElementById('profileContact').textContent = currentUser.contact;
+  document.getElementById('statVisits').textContent = currentUser.visits || 4;
+  document.getElementById('statPts').textContent = currentUser.points || 0;
+  document.getElementById('statTier').textContent = currentUser.tier || 'Bronze';
+
+  // Update promo points
+  const pp = document.getElementById('promoPoints');
+  if (pp) pp.textContent = `You have ${currentUser.points || 0} pts`;
+}
+
+function openEditProfile() {
+  if (!currentUser) return;
+  document.getElementById('edit-name').value = currentUser.name;
+  document.getElementById('edit-contact').value = currentUser.contact;
+  document.getElementById('editPanel').classList.add('open');
+}
+
+function closeEditProfile() {
+  document.getElementById('editPanel').classList.remove('open');
+}
+
+function saveProfile() {
+  const name = document.getElementById('edit-name').value.trim();
+  const contact = document.getElementById('edit-contact').value.trim();
+  if (!name || !contact) { showToast('Please fill in all fields.'); return; }
+
+  currentUser.name = name;
+  currentUser.contact = contact;
+  localStorage.setItem('ri_mobile_user', JSON.stringify(currentUser));
+  renderProfile();
+  initHome();
+  closeEditProfile();
+  showToast('Profile updated!');
+}
+
+function openNotifPrefs() {
+  document.getElementById('notifPanel').classList.add('open');
+}
+function closeNotifPrefs() {
+  document.getElementById('notifPanel').classList.remove('open');
+}
+
+function togglePref(id) {
+  const el = document.getElementById('toggle-' + id);
+  if (el) el.classList.toggle('on');
+}
+
+function openHelp() {
+  document.getElementById('helpPanel').classList.add('open');
+}
+
+function openAbout() {
+  document.getElementById('aboutPanel').classList.add('open');
+}
+
+// =====================================================================
+// TOAST
+// =====================================================================
+function showToast(message, duration) {
+  duration = duration || 2200;
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = message;
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.classList.add('out');
+    setTimeout(() => {
+      if (toast.parentNode) toast.parentNode.removeChild(toast);
+    }, 350);
+  }, duration);
+}
+</script>
+</body>
+</html>
