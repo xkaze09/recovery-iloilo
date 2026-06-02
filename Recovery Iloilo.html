@@ -1075,6 +1075,33 @@ a{color:inherit;text-decoration:none}
 .booking-confirm__ctas{display:flex;flex-direction:column;gap:10px;width:100%;max-width:320px;margin-bottom:20px}
 .booking-confirm__ctas .btn{width:100%;justify-content:center}
 .booking-confirm__hours{font-size:12px;color:var(--ink-40);letter-spacing:.06em}
+
+/* demo fill button */
+.demo-fill-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  background:transparent;border:1px dashed var(--line);
+  color:var(--ink-60);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  padding:7px 16px;border-radius:999px;cursor:pointer;margin-bottom:22px;
+  transition:border-color .3s,color .3s;font-family:var(--sans);
+}
+.demo-fill-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* time slots */
+.time-slots{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.time-slot{
+  padding:8px 14px;border:1px solid var(--line);border-radius:999px;
+  font-size:12px;cursor:pointer;background:transparent;color:var(--ink-60);
+  font-family:var(--sans);transition:all .22s;
+}
+.time-slot:hover{border-color:var(--ink-60);color:var(--ink)}
+.time-slot.active{background:var(--olive);color:var(--on-dark);border-color:var(--olive)}
+
+/* booking ref */
+.booking-ref{
+  font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-40);margin-bottom:6px;
+}
+.booking-ref strong{color:var(--accent);font-weight:500;letter-spacing:.08em}
 </style>
 </head>
 <body>
@@ -1783,6 +1810,7 @@ a{color:inherit;text-decoration:none}
         <p>We'll confirm your appointment shortly</p>
       </div>
       <div class="booking-selected-summary" id="booking-summary"></div>
+      <button type="button" class="demo-fill-btn" onclick="fillDemoData()">&#10022; Fill with demo data</button>
       <form class="booking-form" onsubmit="submitBooking(event)">
         <div class="booking-form__field">
           <label>Your name</label>
@@ -1793,8 +1821,13 @@ a{color:inherit;text-decoration:none}
           <input type="text" id="bk-contact" placeholder="09XX or @handle" required/>
         </div>
         <div class="booking-form__field">
-          <label>Preferred date &amp; time</label>
-          <input type="text" id="bk-datetime" placeholder="e.g. June 10, 3:00 PM"/>
+          <label>Preferred date</label>
+          <input type="date" id="bk-date" required/>
+        </div>
+        <div class="booking-form__field">
+          <label>Preferred time</label>
+          <div class="time-slots" id="time-slots-grid"></div>
+          <input type="hidden" id="bk-time"/>
         </div>
         <div class="booking-form__field">
           <label>Notes (optional)</label>
@@ -1807,12 +1840,14 @@ a{color:inherit;text-decoration:none}
     <!-- Step 4: Confirmation -->
     <div class="booking-step hidden" id="bs-4">
       <div class="booking-confirm">
-        <div class="booking-confirm__icon">🌿</div>
+        <div class="booking-confirm__icon" style="font-size:32px;margin-bottom:8px">&#10003;</div>
+        <p class="booking-ref">Booking ref: <strong id="bs4-ref">—</strong></p>
         <h2 class="lower" style="font-family:var(--serif)" id="bs4-name">thank you!</h2>
-        <p>Your request has been received. Call us or send a message on Instagram to confirm your appointment.</p>
+        <p>Your request has been received. We'll reach out shortly to confirm your appointment.</p>
+        <div id="bs4-summary" style="margin:18px 0;font-size:14px;color:var(--ink-60);line-height:1.7"></div>
         <div class="booking-confirm__ctas">
           <a href="tel:09853359998" class="btn btn--dark btn--lg">Call 0985 335 9998</a>
-          <a href="https://instagram.com/recoveryiloilo" target="_blank" rel="noopener" class="btn btn--ghost-line">Message @recoveryiloilo</a>
+          <a href="https://instagram.com/recoveryiloilo" target="_blank" rel="noopener" class="btn btn--ghost-line">@recoveryiloilo</a>
         </div>
         <p class="booking-confirm__hours">Open Mon–Fri 10AM–10PM · Sat–Sun 10AM–12AM</p>
       </div>
@@ -2636,6 +2671,35 @@ function goBookingStep(n){
   // GSAP entrance for each step
   const stepEl = document.getElementById('bs-'+n);
   gsap.from(stepEl, { opacity:0, y:24, duration:.55, ease:'power3.out' });
+
+  if(n===3){
+    // update the service summary banner
+    const sumEl = document.getElementById('booking-summary');
+    if(bookingService && sumEl){
+      sumEl.innerHTML = `<span>${bookingService.name}<em>${bookingCat} service</em></span><strong>${bookingService.price}</strong>`;
+    }
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('bk-date').min = today;
+    if(!document.getElementById('bk-date').value) document.getElementById('bk-date').value = today;
+    const grid = document.getElementById('time-slots-grid');
+    if(!grid.children.length){
+      const hours = [10,11,12,13,14,15,16,17,18,19,20,21];
+      hours.forEach(h => {
+        const h12 = h > 12 ? h - 12 : h;
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        const t24 = String(h).padStart(2,'0') + ':00';
+        const btn = document.createElement('button');
+        btn.type='button'; btn.className='time-slot';
+        btn.textContent=`${h12}:00 ${ampm}`; btn.dataset.time=t24;
+        btn.onclick=()=>{
+          grid.querySelectorAll('.time-slot').forEach(s=>s.classList.remove('active'));
+          btn.classList.add('active');
+          document.getElementById('bk-time').value=t24;
+        };
+        grid.appendChild(btn);
+      });
+    }
+  }
 }
 function selectBookingCat(cat){
   bookingCat = cat;
@@ -2657,14 +2721,73 @@ function selectBookingCat(cat){
   });
   goBookingStep(2);
 }
+function fillDemoData(){
+  const demos = [
+    { name:'Maria Santos', contact:'09171234567', notes:'Preferably in the afternoon' },
+    { name:'Ana Reyes', contact:'@anaareyes_', notes:'First time, please be gentle' },
+    { name:'Carmen Dela Cruz', contact:'09451234567', notes:'' },
+  ];
+  const d = demos[Math.floor(Math.random()*demos.length)];
+  document.getElementById('bk-name').value    = d.name;
+  document.getElementById('bk-contact').value = d.contact;
+  document.getElementById('bk-notes').value   = d.notes;
+  // set date to tomorrow
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
+  document.getElementById('bk-date').value = tomorrow.toISOString().split('T')[0];
+  // pick a time slot
+  const slots = document.querySelectorAll('.time-slot');
+  if(slots.length){
+    const idx = Math.floor(Math.random()*Math.min(slots.length,6))+2;
+    const pick = slots[idx];
+    if(pick){ pick.classList.add('active'); document.getElementById('bk-time').value = pick.dataset.time; }
+  }
+}
+
+function generateBookingId(){
+  const d = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const seq = String(Math.floor(Math.random()*900)+100);
+  return `RI-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${seq}`;
+}
+
 function submitBooking(e){
   e.preventDefault();
-  const name = document.getElementById('bk-name').value.trim();
+  const name    = document.getElementById('bk-name').value.trim();
+  const contact = document.getElementById('bk-contact').value.trim();
+  const date    = document.getElementById('bk-date').value;
+  const time    = document.getElementById('bk-time').value;
+  const notes   = document.getElementById('bk-notes').value.trim();
+  const ref     = generateBookingId();
+
   document.getElementById('bs4-name').textContent = `thank you, ${name || 'friend'}!`;
-  const summary = document.getElementById('booking-summary');
+  document.getElementById('bs4-ref').textContent  = ref;
+
   if(bookingService){
-    summary.innerHTML = `<span>${bookingService.name}<em>${bookingCat} service</em></span><strong>${bookingService.price}</strong>`;
+    const dateLabel = date ? new Date(date+'T12:00:00').toLocaleDateString('en-PH',{weekday:'short',month:'long',day:'numeric'}) : '';
+    const timeLabel = time ? ` · ${time}` : '';
+    document.getElementById('bs4-summary').innerHTML =
+      `<strong>${bookingService.name}</strong><br/>${dateLabel}${timeLabel}`;
   }
+
+  // persist to localStorage for dashboard
+  try {
+    const bookings = JSON.parse(localStorage.getItem('ri_bookings')||'[]');
+    bookings.unshift({
+      id: ref,
+      date: date || new Date().toISOString().split('T')[0],
+      time: time || '—',
+      client: name,
+      contact,
+      service: bookingService ? bookingService.name : '—',
+      category: bookingCat || '—',
+      price: parseInt(((bookingService ? bookingService.price : '₱0')||'₱0').replace(/[^0-9]/g,'')),
+      notes,
+      status: 'pending',
+      created: new Date().toISOString(),
+    });
+    localStorage.setItem('ri_bookings', JSON.stringify(bookings));
+  } catch(_){}
+
   goBookingStep(4);
 }
 // Close on backdrop click

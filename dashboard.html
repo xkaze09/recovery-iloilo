@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Recovery Iloilo — CRM Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet"/>
+<style>
+/* ============================================================
+   RECOVERY ILOILO — CRM DASHBOARD
+   ============================================================ */
+:root{
+  --cream:      #F3EEE4;
+  --cream-deep: #E7DECF;
+  --card:       #FBF8F2;
+  --olive:      #2C2416;
+  --ink:        #2C2416;
+  --ink-60:     #6B6353;
+  --ink-40:     #9C9686;
+  --on-dark:    #EFE9DC;
+  --on-dark-60: #B3AB97;
+  --line:       #D5CBB8;
+  --accent:     #8A4A1A;
+
+  --serif: "Cormorant Garamond", Georgia, serif;
+  --sans:  "DM Sans", system-ui, sans-serif;
+
+  --sidebar-w: 240px;
+  --header-h:  64px;
+
+  --status-confirmed-bg: #2C6B2F;
+  --status-pending-bg:   #8A4A1A;
+  --status-completed-bg: #9C9686;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--cream);color:var(--ink);
+  font-family:var(--sans);font-weight:300;line-height:1.6;font-size:15px;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  min-height:100vh;
+}
+a{color:inherit;text-decoration:none}
+img{display:block;max-width:100%}
+button{font-family:var(--sans);cursor:pointer}
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.db-layout{
+  display:flex;min-height:100vh;
+}
+
+/* ---- SIDEBAR ---- */
+.db-sidebar{
+  width:var(--sidebar-w);flex-shrink:0;
+  background:var(--olive);
+  display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;bottom:0;z-index:100;
+  overflow-y:auto;
+}
+.db-sidebar__logo{
+  padding:28px 22px 20px;
+  display:flex;align-items:center;gap:10px;
+  border-bottom:1px solid rgba(239,233,220,.08);
+}
+.db-sidebar__logo img{
+  width:36px;height:36px;border-radius:6px;object-fit:cover;flex-shrink:0;
+}
+.db-sidebar__logo span{
+  font-family:var(--serif);font-weight:500;font-size:16px;
+  color:var(--on-dark);line-height:1.2;
+}
+.db-sidebar__nav{
+  flex:1;padding:18px 12px;display:flex;flex-direction:column;gap:2px;
+}
+.db-nav-item{
+  display:flex;align-items:center;gap:11px;
+  padding:10px 12px;border-radius:10px;
+  color:var(--on-dark-60);font-size:13px;letter-spacing:.02em;
+  background:transparent;border:none;text-align:left;width:100%;
+  transition:background .25s,color .25s;
+}
+.db-nav-item:hover{background:rgba(239,233,220,.08);color:var(--on-dark)}
+.db-nav-item.active{background:rgba(239,233,220,.14);color:var(--on-dark)}
+.db-nav-item svg{width:17px;height:17px;flex-shrink:0;opacity:.7}
+.db-nav-item.active svg,.db-nav-item:hover svg{opacity:1}
+.db-sidebar__footer{
+  padding:18px 22px;border-top:1px solid rgba(239,233,220,.08);
+}
+.db-sidebar__hours{
+  font-size:11px;color:var(--on-dark-60);line-height:1.7;margin-bottom:8px;
+}
+.db-sidebar__version{
+  font-size:10px;color:rgba(179,171,151,.5);letter-spacing:.1em;
+}
+
+/* ---- MAIN ---- */
+.db-main{
+  flex:1;margin-left:var(--sidebar-w);
+  display:flex;flex-direction:column;min-height:100vh;
+}
+
+/* ---- HEADER ---- */
+.db-header{
+  height:var(--header-h);
+  background:rgba(243,238,228,.9);
+  backdrop-filter:blur(18px) saturate(1.3);
+  -webkit-backdrop-filter:blur(18px) saturate(1.3);
+  border-bottom:1px solid var(--line);
+  position:sticky;top:0;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 32px;
+}
+.db-header__left h1{
+  font-family:var(--serif);font-weight:400;font-size:22px;color:var(--ink);line-height:1;
+}
+.db-header__left p{
+  font-size:12px;color:var(--ink-40);margin-top:2px;letter-spacing:.06em;
+}
+.db-header__right{
+  display:flex;align-items:center;gap:20px;
+}
+.db-header__datetime{
+  font-size:13px;color:var(--ink-60);text-align:right;
+}
+.db-header__datetime strong{display:block;color:var(--ink);font-weight:400;font-size:14px}
+.db-back-link{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-60);border:1px solid var(--line);
+  border-radius:999px;padding:6px 14px;
+  transition:background .25s,color .25s,border-color .25s;
+}
+.db-back-link:hover{background:var(--olive);color:var(--on-dark);border-color:var(--olive)}
+
+/* ---- CONTENT ---- */
+.db-content{
+  flex:1;padding:32px;max-width:1200px;
+}
+
+/* ---- SECTIONS ---- */
+.db-section{display:none}
+.db-section.active{display:block}
+
+/* ============================================================
+   KPI CARDS
+   ============================================================ */
+.kpi-row{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:18px;
+  margin-bottom:32px;
+}
+.kpi-card{
+  background:var(--card);border:1px solid var(--line);
+  border-radius:16px;padding:22px 24px;
+  box-shadow:0 2px 12px rgba(44,36,22,.05);
+  transition:box-shadow .3s,transform .3s;
+}
+.kpi-card:hover{
+  box-shadow:0 8px 28px rgba(44,36,22,.1);
+  transform:translateY(-2px);
+}
+.kpi-card__label{
+  font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--ink-40);margin-bottom:10px;
+}
+.kpi-card__value{
+  font-family:var(--serif);font-size:42px;font-weight:300;
+  color:var(--ink);line-height:1;
+}
+.kpi-card__sub{
+  font-size:12px;color:var(--ink-40);margin-top:6px;
+}
+
+/* ============================================================
+   TWO-COL GRID (schedule + calendar)
+   ============================================================ */
+.db-two-col{
+  display:grid;grid-template-columns:1fr 280px;gap:22px;
+  margin-bottom:32px;
+}
+
+/* ============================================================
+   TODAY'S SCHEDULE
+   ============================================================ */
+.db-card{
+  background:var(--card);border:1px solid var(--line);
+  border-radius:16px;padding:24px;
+  box-shadow:0 2px 12px rgba(44,36,22,.05);
+}
+.db-card__title{
+  font-family:var(--serif);font-size:20px;font-weight:400;
+  color:var(--ink);margin-bottom:18px;
+}
+.schedule-row{
+  display:flex;align-items:center;gap:14px;
+  padding:13px 0;border-bottom:1px solid var(--line);
+}
+.schedule-row:last-child{border-bottom:none}
+.schedule-time{
+  font-family:var(--serif);font-size:16px;
+  color:var(--accent);white-space:nowrap;min-width:68px;
+  font-weight:400;
+}
+.schedule-info{flex:1;min-width:0}
+.schedule-client{font-size:14px;font-weight:400;color:var(--ink)}
+.schedule-service{font-size:12px;color:var(--ink-60);margin-top:2px}
+.schedule-price{
+  font-family:var(--serif);font-size:17px;
+  color:var(--ink);white-space:nowrap;
+}
+.status-badge{
+  display:inline-flex;align-items:center;
+  padding:3px 10px;border-radius:999px;
+  font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  font-weight:400;color:#fff;white-space:nowrap;
+}
+.status-badge--confirmed{background:var(--status-confirmed-bg)}
+.status-badge--pending{background:var(--status-pending-bg)}
+.status-badge--completed{background:var(--status-completed-bg)}
+.status-badge--new{
+  background:transparent;color:var(--accent);
+  border:1px solid var(--accent);
+}
+
+/* ============================================================
+   MINI CALENDAR
+   ============================================================ */
+.mini-cal{user-select:none}
+.mini-cal__header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:14px;
+}
+.mini-cal__month{
+  font-family:var(--serif);font-size:18px;font-weight:400;color:var(--ink);
+}
+.mini-cal__grid{
+  display:grid;grid-template-columns:repeat(7,1fr);
+  gap:2px;text-align:center;
+}
+.mini-cal__day-name{
+  font-size:9px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-40);padding:4px 0;
+}
+.mini-cal__day{
+  aspect-ratio:1;display:flex;align-items:center;justify-content:center;
+  border-radius:50%;font-size:12px;color:var(--ink-60);
+  position:relative;cursor:default;
+  transition:background .2s,color .2s;
+}
+.mini-cal__day.has-appt{
+  color:var(--ink);font-weight:500;cursor:pointer;
+}
+.mini-cal__day.has-appt::after{
+  content:'';position:absolute;bottom:3px;left:50%;transform:translateX(-50%);
+  width:4px;height:4px;border-radius:50%;background:var(--accent);
+}
+.mini-cal__day.today{
+  background:var(--olive);color:var(--on-dark);
+}
+.mini-cal__day.today::after{background:var(--on-dark)}
+.mini-cal__day.empty{opacity:0}
+
+/* ============================================================
+   BOOKINGS TABLE
+   ============================================================ */
+.db-filter-tabs{
+  display:flex;gap:4px;margin-bottom:18px;
+  background:rgba(255,255,255,.5);
+  border:1px solid var(--line);
+  border-radius:999px;padding:4px;width:fit-content;
+}
+.db-filter-tab{
+  font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+  padding:.55em 1.4em;border-radius:999px;
+  color:var(--ink-60);background:transparent;border:none;
+  transition:background .25s,color .25s;
+}
+.db-filter-tab.active{background:var(--olive);color:var(--on-dark)}
+.db-filter-tab:hover:not(.active){background:rgba(44,36,22,.07)}
+
+.db-table-wrap{overflow-x:auto}
+.db-table{width:100%;border-collapse:collapse;font-size:13.5px}
+.db-table th{
+  text-align:left;padding:10px 14px;
+  font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--ink-40);border-bottom:1px solid var(--line);
+  font-weight:400;white-space:nowrap;
+}
+.db-table td{
+  padding:12px 14px;border-bottom:1px solid rgba(213,203,184,.4);
+  color:var(--ink-60);vertical-align:middle;
+}
+.db-table tr:last-child td{border-bottom:none}
+.db-table tr:hover td{background:rgba(231,222,207,.3)}
+.db-table .td-client{color:var(--ink);font-weight:400}
+.db-table .td-price{
+  font-family:var(--serif);font-size:16px;color:var(--ink);
+}
+.db-table .td-id{
+  font-size:11px;color:var(--ink-40);letter-spacing:.06em;
+}
+
+/* ============================================================
+   CLIENTS
+   ============================================================ */
+.clients-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+  gap:16px;
+}
+.client-card{
+  background:var(--card);border:1px solid var(--line);
+  border-radius:14px;padding:18px;
+  display:flex;align-items:flex-start;gap:14px;
+  transition:box-shadow .25s,transform .25s;
+}
+.client-card:hover{
+  box-shadow:0 6px 22px rgba(44,36,22,.09);
+  transform:translateY(-2px);
+}
+.client-avatar{
+  width:44px;height:44px;border-radius:50%;
+  background:var(--olive);color:var(--on-dark);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--serif);font-size:18px;font-weight:400;
+  flex-shrink:0;
+}
+.client-info{flex:1;min-width:0}
+.client-name{
+  font-size:14px;font-weight:400;color:var(--ink);
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+}
+.client-contact{font-size:12px;color:var(--ink-40);margin-top:2px}
+.client-meta{
+  display:flex;gap:16px;margin-top:10px;
+  font-size:12px;color:var(--ink-60);
+}
+.client-meta span{display:flex;flex-direction:column;gap:2px}
+.client-meta strong{font-size:15px;color:var(--ink);font-weight:400;font-family:var(--serif)}
+.loyalty-badge{
+  display:inline-flex;align-items:center;
+  padding:2px 8px;border-radius:999px;
+  font-size:9px;letter-spacing:.12em;text-transform:uppercase;
+}
+.loyalty-badge--gold{background:#C8852A;color:#fff}
+.loyalty-badge--silver{background:#9C9686;color:#fff}
+.loyalty-badge--bronze{background:var(--cream-deep);color:var(--ink-60);border:1px solid var(--line)}
+
+/* ============================================================
+   SERVICES SUMMARY
+   ============================================================ */
+.services-sum-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:18px;
+}
+.svc-sum-card{
+  background:var(--card);border:1px solid var(--line);
+  border-radius:16px;padding:24px;
+  box-shadow:0 2px 12px rgba(44,36,22,.05);
+}
+.svc-sum-card__cat{
+  font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--ink-40);margin-bottom:12px;
+}
+.svc-sum-card__num{
+  font-family:var(--serif);font-size:48px;font-weight:300;
+  color:var(--ink);line-height:1;
+}
+.svc-sum-card__label{
+  font-size:13px;color:var(--ink-60);margin-top:4px;
+}
+.svc-sum-card__avg{
+  font-size:12px;color:var(--ink-40);margin-top:12px;
+  padding-top:12px;border-top:1px solid var(--line);
+}
+
+/* ============================================================
+   SECTION HEADERS
+   ============================================================ */
+.db-section-header{
+  display:flex;align-items:baseline;justify-content:space-between;
+  margin-bottom:22px;gap:16px;
+}
+.db-section-header h2{
+  font-family:var(--serif);font-weight:300;font-size:32px;
+  color:var(--ink);line-height:1;
+}
+.db-section-header p{font-size:13px;color:var(--ink-40)}
+
+/* ============================================================
+   MOBILE RESPONSIVE
+   ============================================================ */
+@media(max-width:768px){
+  .db-sidebar{
+    width:100%;height:60px;bottom:0;top:auto;
+    flex-direction:row;overflow:hidden;
+    border-top:1px solid rgba(239,233,220,.15);
+  }
+  .db-sidebar__logo{display:none}
+  .db-sidebar__nav{
+    flex-direction:row;padding:8px;
+    align-items:center;justify-content:space-around;
+    width:100%;
+  }
+  .db-nav-item{
+    flex-direction:column;gap:3px;padding:6px 8px;
+    font-size:9px;letter-spacing:.08em;align-items:center;
+    min-width:0;
+  }
+  .db-nav-item svg{width:20px;height:20px}
+  .db-sidebar__footer{display:none}
+  .db-main{margin-left:0;margin-bottom:60px}
+  .kpi-row{grid-template-columns:repeat(2,1fr)}
+  .db-two-col{grid-template-columns:1fr}
+  .db-header{padding:0 16px}
+  .db-content{padding:16px}
+  .services-sum-grid{grid-template-columns:1fr}
+  .clients-grid{grid-template-columns:1fr}
+}
+@media(max-width:480px){
+  .kpi-row{grid-template-columns:1fr 1fr}
+  .kpi-card__value{font-size:32px}
+}
+</style>
+</head>
+<body>
+
+<div class="db-layout">
+
+  <!-- ============================== SIDEBAR ============================== -->
+  <aside class="db-sidebar">
+    <div class="db-sidebar__logo">
+      <img src="Logo%2C%20Price%2C%20Address%2C/recoverylogo.jpg" alt="Recovery Iloilo"/>
+      <span>Recovery<br/>Iloilo</span>
+    </div>
+
+    <nav class="db-sidebar__nav" role="navigation" aria-label="Dashboard navigation">
+      <button class="db-nav-item active" onclick="showSection('overview')" id="nav-overview">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="2" width="7" height="7" rx="1.5"/>
+          <rect x="11" y="2" width="7" height="7" rx="1.5"/>
+          <rect x="2" y="11" width="7" height="7" rx="1.5"/>
+          <rect x="11" y="11" width="7" height="7" rx="1.5"/>
+        </svg>
+        Overview
+      </button>
+      <button class="db-nav-item" onclick="showSection('calendar')" id="nav-calendar">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="4" width="16" height="14" rx="2"/>
+          <line x1="2" y1="8" x2="18" y2="8"/>
+          <line x1="6" y1="2" x2="6" y2="6"/>
+          <line x1="14" y1="2" x2="14" y2="6"/>
+        </svg>
+        Calendar
+      </button>
+      <button class="db-nav-item" onclick="showSection('clients')" id="nav-clients">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="8" cy="6" r="3"/>
+          <path d="M2 17c0-3.3 2.7-6 6-6"/>
+          <circle cx="15" cy="10" r="2.5"/>
+          <path d="M11 17c0-2.2 1.8-4 4-4s4 1.8 4 4"/>
+        </svg>
+        Clients
+      </button>
+      <button class="db-nav-item" onclick="showSection('services')" id="nav-services">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10 2l2 6h6l-5 3.6 1.9 5.9L10 14l-4.9 3.5L7 11.6 2 8h6z"/>
+        </svg>
+        Services
+      </button>
+    </nav>
+
+    <div class="db-sidebar__footer">
+      <div class="db-sidebar__hours">
+        Mon–Fri 10AM–10PM<br/>
+        Sat–Sun 10AM–12AM
+      </div>
+      <div class="db-sidebar__version">v1.0 &middot; Demo</div>
+    </div>
+  </aside>
+
+  <!-- ============================== MAIN ============================== -->
+  <div class="db-main">
+
+    <!-- HEADER -->
+    <header class="db-header">
+      <div class="db-header__left">
+        <h1 id="header-greeting">Good morning</h1>
+        <p>Recovery Iloilo CRM</p>
+      </div>
+      <div class="db-header__right">
+        <div class="db-header__datetime">
+          <strong id="hdr-time">—</strong>
+          <span id="hdr-date">—</span>
+        </div>
+        <a href="Recovery Iloilo.html" class="db-back-link">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+            <polyline points="7,2 3,6 7,10"/>
+          </svg>
+          Back to site
+        </a>
+      </div>
+    </header>
+
+    <!-- CONTENT -->
+    <main class="db-content">
+
+      <!-- ======================== OVERVIEW SECTION ======================== -->
+      <section class="db-section active" id="section-overview">
+
+        <!-- KPI ROW -->
+        <div class="kpi-row">
+          <div class="kpi-card">
+            <div class="kpi-card__label">Bookings This Month</div>
+            <div class="kpi-card__value">21</div>
+            <div class="kpi-card__sub">June 2026</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-card__label">Revenue Collected</div>
+            <div class="kpi-card__value">&#8369;12,847</div>
+            <div class="kpi-card__sub">Confirmed sessions</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-card__label">New Clients (June)</div>
+            <div class="kpi-card__value">4</div>
+            <div class="kpi-card__sub">First-time bookings</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-card__label">Return Rate</div>
+            <div class="kpi-card__value">73%</div>
+            <div class="kpi-card__sub">Repeat clients</div>
+          </div>
+        </div>
+
+        <!-- SCHEDULE + CALENDAR -->
+        <div class="db-two-col">
+
+          <!-- Today's Schedule -->
+          <div class="db-card">
+            <div class="db-card__title">Today's Schedule — <span id="today-label">June 2</span></div>
+            <div id="today-schedule">
+              <div class="schedule-row">
+                <div class="schedule-time">10:00 AM</div>
+                <div class="schedule-info">
+                  <div class="schedule-client">Maria Santos</div>
+                  <div class="schedule-service">Swedish Massage</div>
+                </div>
+                <div class="schedule-price">&#8369;649</div>
+                <span class="status-badge status-badge--confirmed">confirmed</span>
+              </div>
+              <div class="schedule-row">
+                <div class="schedule-time">12:30 PM</div>
+                <div class="schedule-info">
+                  <div class="schedule-client">Ana Reyes</div>
+                  <div class="schedule-service">Gel Pedicure</div>
+                </div>
+                <div class="schedule-price">&#8369;499</div>
+                <span class="status-badge status-badge--confirmed">confirmed</span>
+              </div>
+              <div class="schedule-row">
+                <div class="schedule-time">3:00 PM</div>
+                <div class="schedule-info">
+                  <div class="schedule-client">Josie Villanueva</div>
+                  <div class="schedule-service">Express Head Spa (45 min)</div>
+                </div>
+                <div class="schedule-price">&#8369;1,399</div>
+                <span class="status-badge status-badge--pending">pending</span>
+              </div>
+              <div class="schedule-row">
+                <div class="schedule-time">5:30 PM</div>
+                <div class="schedule-info">
+                  <div class="schedule-client">Carmen Dela Cruz</div>
+                  <div class="schedule-service">Basic Manicure</div>
+                </div>
+                <div class="schedule-price">&#8369;239</div>
+                <span class="status-badge status-badge--confirmed">confirmed</span>
+              </div>
+            </div>
+            <!-- real bookings from site will be injected here -->
+            <div id="live-bookings-schedule"></div>
+          </div>
+
+          <!-- Mini Calendar -->
+          <div class="db-card mini-cal">
+            <div class="db-card__title">June 2026</div>
+            <div class="mini-cal__header">
+              <span class="mini-cal__month">June</span>
+            </div>
+            <div class="mini-cal__grid" id="mini-cal-grid"></div>
+          </div>
+
+        </div>
+
+        <!-- BOOKINGS TABLE -->
+        <div class="db-card" style="margin-bottom:0">
+          <div class="db-section-header" style="margin-bottom:16px">
+            <h2>All Bookings</h2>
+            <div class="db-filter-tabs" id="filter-tabs">
+              <button class="db-filter-tab active" onclick="filterBookings('all',this)">All</button>
+              <button class="db-filter-tab" onclick="filterBookings('today',this)">Today</button>
+              <button class="db-filter-tab" onclick="filterBookings('upcoming',this)">Upcoming</button>
+              <button class="db-filter-tab" onclick="filterBookings('completed',this)">Completed</button>
+            </div>
+          </div>
+          <div class="db-table-wrap">
+            <table class="db-table" id="bookings-table">
+              <thead>
+                <tr>
+                  <th>Ref</th>
+                  <th>Date</th>
+                  <th>Time</th>
+                  <th>Client</th>
+                  <th>Service</th>
+                  <th>Price</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="bookings-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ======================== CALENDAR SECTION ======================== -->
+      <section class="db-section" id="section-calendar">
+        <div class="db-section-header">
+          <h2>June 2026</h2>
+          <p>Full month view</p>
+        </div>
+        <div class="db-card">
+          <p style="color:var(--ink-60);font-size:14px;line-height:1.8">
+            This section shows the full month calendar. Appointment dots mark days with bookings.<br/>
+            Dates with appointments: June 1, 2, 3, 4, 5, 7, 9, 10, 12, 15.
+          </p>
+          <div class="mini-cal__grid" id="full-cal-grid" style="margin-top:24px;gap:6px;"></div>
+        </div>
+      </section>
+
+      <!-- ======================== CLIENTS SECTION ======================== -->
+      <section class="db-section" id="section-clients">
+        <div class="db-section-header">
+          <h2>Clients</h2>
+          <p id="clients-count">Loading...</p>
+        </div>
+        <div class="clients-grid" id="clients-grid"></div>
+      </section>
+
+      <!-- ======================== SERVICES SECTION ======================== -->
+      <section class="db-section" id="section-services">
+        <div class="db-section-header">
+          <h2>Services Summary</h2>
+          <p>Derived from all bookings</p>
+        </div>
+        <div class="services-sum-grid" id="services-sum-grid"></div>
+      </section>
+
+    </main>
+  </div><!-- /db-main -->
+
+</div><!-- /db-layout -->
+
+<script>
+/* ============================================================
+   MOCK DATA
+   ============================================================ */
+const MOCK_BOOKINGS = [
+  // COMPLETED
+  {id:'RI-20260530-001',date:'2026-05-30',time:'10:00',client:'Pia Gonzales',contact:'@piagonzales',service:'Lash Lift',category:'face',price:490,status:'completed'},
+  {id:'RI-20260530-002',date:'2026-05-30',time:'14:00',client:'Candy Buhian',contact:'09981234569',service:'Swedish Massage',category:'body',price:649,status:'completed'},
+  {id:'RI-20260531-001',date:'2026-05-31',time:'11:00',client:'Ana Reyes',contact:'@anaareyes_',service:'Basic Pedicure',category:'face',price:289,status:'completed'},
+  {id:'RI-20260531-002',date:'2026-05-31',time:'15:00',client:'Carmen Dela Cruz',contact:'09451234567',service:'Express Head Spa (45 min)',category:'recovery',price:1399,status:'completed'},
+  {id:'RI-20260601-001',date:'2026-06-01',time:'10:00',client:'Maria Santos',contact:'09171234567',service:'Thai Massage',category:'body',price:649,status:'completed'},
+  {id:'RI-20260601-002',date:'2026-06-01',time:'13:00',client:'Rhea Gabaldon',contact:'09981234568',service:'Gel Manicure',category:'face',price:399,status:'completed'},
+  {id:'RI-20260601-003',date:'2026-06-01',time:'17:00',client:'Josie Villanueva',contact:'09981234567',service:'Regular Foot Spa',category:'recovery',price:399,status:'completed'},
+  // TODAY (June 2)
+  {id:'RI-20260602-001',date:'2026-06-02',time:'10:00',client:'Maria Santos',contact:'09171234567',service:'Swedish Massage',category:'body',price:649,status:'confirmed'},
+  {id:'RI-20260602-002',date:'2026-06-02',time:'12:30',client:'Ana Reyes',contact:'@anaareyes_',service:'Gel Pedicure',category:'face',price:499,status:'confirmed'},
+  {id:'RI-20260602-003',date:'2026-06-02',time:'15:00',client:'Josie Villanueva',contact:'09981234567',service:'Express Head Spa (45 min)',category:'recovery',price:1399,status:'pending'},
+  {id:'RI-20260602-004',date:'2026-06-02',time:'17:30',client:'Carmen Dela Cruz',contact:'09451234567',service:'Basic Manicure',category:'face',price:239,status:'confirmed'},
+  // UPCOMING
+  {id:'RI-20260603-001',date:'2026-06-03',time:'11:00',client:'Lorna Magbanua',contact:'@lornamagz',service:'Thai Massage',category:'body',price:649,status:'confirmed'},
+  {id:'RI-20260603-002',date:'2026-06-03',time:'14:00',client:'Precious Espinosa',contact:'09171234568',service:'Classic Lash Extensions',category:'face',price:699,status:'confirmed'},
+  {id:'RI-20260604-001',date:'2026-06-04',time:'10:30',client:'Rhea Gabaldon',contact:'09981234568',service:'Foot Spa + Scrub',category:'recovery',price:499,status:'confirmed'},
+  {id:'RI-20260604-002',date:'2026-06-04',time:'16:00',client:'Theresa Aquino',contact:'09451234568',service:'Combination Massage',category:'body',price:849,status:'confirmed'},
+  {id:'RI-20260605-001',date:'2026-06-05',time:'11:00',client:'Joyce Malabanan',contact:'@joycebeauty',service:'Brow Lamination',category:'face',price:599,status:'confirmed'},
+  {id:'RI-20260605-002',date:'2026-06-05',time:'13:30',client:'Maria Santos',contact:'09171234567',service:'Foot Reflex (30 min)',category:'recovery',price:399,status:'confirmed'},
+  {id:'RI-20260605-003',date:'2026-06-05',time:'19:00',client:'Marites Flores',contact:'09171234569',service:'Shiatsu Massage',category:'body',price:949,status:'confirmed'},
+  {id:'RI-20260607-001',date:'2026-06-07',time:'10:00',client:'Pia Gonzales',contact:'@piagonzales',service:'Cat Eye / Wispy Lash',category:'face',price:799,status:'confirmed'},
+  {id:'RI-20260607-002',date:'2026-06-07',time:'14:30',client:'Candy Buhian',contact:'09981234569',service:'Luxury Scalp + Basic Facial',category:'recovery',price:2199,status:'confirmed'},
+  {id:'RI-20260609-001',date:'2026-06-09',time:'11:00',client:'Ana Reyes',contact:'@anaareyes_',service:'Lash Lift',category:'face',price:490,status:'confirmed'},
+  {id:'RI-20260610-001',date:'2026-06-10',time:'15:00',client:'Theresa Aquino',contact:'09451234568',service:'Milk + Honey Body Scrub',category:'body',price:649,status:'confirmed'},
+  {id:'RI-20260612-001',date:'2026-06-12',time:'10:00',client:'Lorna Magbanua',contact:'@lornamagz',service:'Face Lifting Massage (30 min)',category:'face',price:479,status:'confirmed'},
+  {id:'RI-20260615-001',date:'2026-06-15',time:'13:00',client:'Joyce Malabanan',contact:'@joycebeauty',service:'Swedish Massage',category:'body',price:649,status:'confirmed'},
+];
+
+/* ============================================================
+   MERGE REAL BOOKINGS FROM MAIN SITE
+   ============================================================ */
+function getAllBookings(){
+  let real = [];
+  try {
+    real = JSON.parse(localStorage.getItem('ri_bookings') || '[]');
+    real = real.map(b => ({ ...b, _isNew: true }));
+  } catch(_){}
+  return [...real, ...MOCK_BOOKINGS];
+}
+
+const ALL_BOOKINGS = getAllBookings();
+const TODAY = '2026-06-02'; // demo today
+
+/* ============================================================
+   LIVE CLOCK & GREETING
+   ============================================================ */
+function updateClock(){
+  const now = new Date();
+  const h = now.getHours();
+  const greeting = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('header-greeting').textContent = greeting;
+  const timeStr = now.toLocaleTimeString('en-PH', { hour:'2-digit', minute:'2-digit', hour12:true });
+  const dateStr = now.toLocaleDateString('en-PH', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+  document.getElementById('hdr-time').textContent = timeStr;
+  document.getElementById('hdr-date').textContent = dateStr;
+}
+updateClock();
+setInterval(updateClock, 30000);
+
+/* ============================================================
+   NAV / SECTION SWITCHING
+   ============================================================ */
+function showSection(id){
+  document.querySelectorAll('.db-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.db-nav-item').forEach(n => n.classList.remove('active'));
+  const sec = document.getElementById('section-'+id);
+  if(sec) sec.classList.add('active');
+  const nav = document.getElementById('nav-'+id);
+  if(nav) nav.classList.add('active');
+}
+
+/* ============================================================
+   FORMAT HELPERS
+   ============================================================ */
+function fmtDate(dateStr){
+  if(!dateStr) return '—';
+  try {
+    return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-PH',{
+      month:'short', day:'numeric', year:'numeric'
+    });
+  } catch(_){ return dateStr; }
+}
+function fmtTime(t){
+  if(!t || t === '—') return '—';
+  const [h,m] = t.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12  = h > 12 ? h-12 : h === 0 ? 12 : h;
+  return `${h12}:${String(m||0).padStart(2,'0')} ${ampm}`;
+}
+function statusBadge(status, isNew){
+  if(isNew) return `<span class="status-badge status-badge--new">New</span>`;
+  const map = { confirmed:'status-badge--confirmed', pending:'status-badge--pending', completed:'status-badge--completed' };
+  return `<span class="status-badge ${map[status]||'status-badge--pending'}">${status}</span>`;
+}
+
+/* ============================================================
+   BOOKINGS TABLE
+   ============================================================ */
+let currentFilter = 'all';
+
+function filterBookings(filter, btn){
+  currentFilter = filter;
+  document.querySelectorAll('.db-filter-tab').forEach(t => t.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderBookingsTable();
+}
+
+function renderBookingsTable(){
+  const tbody = document.getElementById('bookings-tbody');
+  const bookings = ALL_BOOKINGS.filter(b => {
+    if(currentFilter === 'today')    return b.date === TODAY;
+    if(currentFilter === 'upcoming') return b.date > TODAY && b.status !== 'completed';
+    if(currentFilter === 'completed')return b.status === 'completed';
+    return true; // all
+  });
+
+  tbody.innerHTML = bookings.map(b => `
+    <tr>
+      <td class="td-id">${b.id}</td>
+      <td>${fmtDate(b.date)}</td>
+      <td>${fmtTime(b.time)}</td>
+      <td class="td-client">${b.client || '—'}</td>
+      <td>${b.service || '—'}</td>
+      <td class="td-price">&#8369;${(b.price||0).toLocaleString()}</td>
+      <td>${statusBadge(b.status, b._isNew)}</td>
+    </tr>
+  `).join('');
+
+  if(!bookings.length){
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:28px;color:var(--ink-40)">No bookings found</td></tr>';
+  }
+}
+
+/* ============================================================
+   MINI CALENDAR (June 2026, starts Monday)
+   ============================================================ */
+const APPT_DAYS_JUNE = new Set([1,2,3,4,5,7,9,10,12,15]);
+
+function buildMiniCal(containerId, cellSize){
+  const grid = document.getElementById(containerId);
+  if(!grid) return;
+  const days = ['M','T','W','T','F','S','S'];
+  grid.innerHTML = '';
+  days.forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'mini-cal__day-name';
+    el.textContent = d;
+    grid.appendChild(el);
+  });
+  // June 1 2026 = Monday = index 0 in M-T-W-T-F-S-S
+  const startOffset = 0;
+  for(let i = 0; i < startOffset; i++){
+    const el = document.createElement('div');
+    el.className = 'mini-cal__day empty';
+    el.textContent = '';
+    grid.appendChild(el);
+  }
+  for(let day = 1; day <= 30; day++){
+    const el = document.createElement('div');
+    el.className = 'mini-cal__day';
+    el.textContent = day;
+    if(day === 2) el.classList.add('today');
+    if(APPT_DAYS_JUNE.has(day)) el.classList.add('has-appt');
+    if(APPT_DAYS_JUNE.has(day)){
+      el.title = `Appointments on June ${day}`;
+    }
+    grid.appendChild(el);
+  }
+}
+
+/* ============================================================
+   TODAY'S LIVE BOOKINGS (from localStorage)
+   ============================================================ */
+function renderLiveSchedule(){
+  const liveBookings = ALL_BOOKINGS.filter(b => b._isNew && b.date === TODAY);
+  const container = document.getElementById('live-bookings-schedule');
+  if(!container) return;
+  if(!liveBookings.length){ container.innerHTML = ''; return; }
+
+  container.innerHTML = '<div style="padding:12px 0 4px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)">New from site</div>' +
+    liveBookings.map(b => `
+      <div class="schedule-row">
+        <div class="schedule-time">${fmtTime(b.time)}</div>
+        <div class="schedule-info">
+          <div class="schedule-client">${b.client}</div>
+          <div class="schedule-service">${b.service}</div>
+        </div>
+        <div class="schedule-price">&#8369;${(b.price||0).toLocaleString()}</div>
+        ${statusBadge(b.status, true)}
+      </div>
+    `).join('');
+}
+
+/* ============================================================
+   CLIENTS
+   ============================================================ */
+function buildClients(){
+  const clientMap = {};
+  ALL_BOOKINGS.forEach(b => {
+    if(!b.client) return;
+    const key = b.client;
+    if(!clientMap[key]){
+      clientMap[key] = {
+        name: b.client,
+        contact: b.contact,
+        visits: 0,
+        spent: 0,
+        lastService: b.service,
+        lastDate: b.date,
+      };
+    }
+    clientMap[key].visits++;
+    clientMap[key].spent += (b.price || 0);
+    if(b.date >= clientMap[key].lastDate){
+      clientMap[key].lastService = b.service;
+      clientMap[key].lastDate = b.date;
+    }
+  });
+  return Object.values(clientMap).sort((a,b) => b.visits - a.visits);
+}
+
+function getInitials(name){
+  return name.split(' ').map(p => p[0]).join('').slice(0,2).toUpperCase();
+}
+
+function loyaltyBadge(visits){
+  if(visits >= 3) return '<span class="loyalty-badge loyalty-badge--gold">Gold</span>';
+  if(visits >= 2) return '<span class="loyalty-badge loyalty-badge--silver">Silver</span>';
+  return '<span class="loyalty-badge loyalty-badge--bronze">Bronze</span>';
+}
+
+function renderClients(){
+  const clients = buildClients();
+  const grid = document.getElementById('clients-grid');
+  const countEl = document.getElementById('clients-count');
+  if(countEl) countEl.textContent = `${clients.length} unique clients`;
+  if(!grid) return;
+
+  grid.innerHTML = clients.map(c => `
+    <div class="client-card">
+      <div class="client-avatar">${getInitials(c.name)}</div>
+      <div class="client-info">
+        <div class="client-name">
+          ${c.name}
+          ${loyaltyBadge(c.visits)}
+        </div>
+        <div class="client-contact">${c.contact || '—'}</div>
+        <div class="client-meta">
+          <span><strong>${c.visits}</strong>Visits</span>
+          <span><strong>&#8369;${c.spent.toLocaleString()}</strong>Spent</span>
+        </div>
+        <div style="font-size:12px;color:var(--ink-40);margin-top:8px">Last: ${c.lastService}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ============================================================
+   SERVICES SUMMARY
+   ============================================================ */
+function renderServicesSummary(){
+  const cats = { body:[], face:[], recovery:[] };
+  ALL_BOOKINGS.forEach(b => {
+    const cat = (b.category||'').toLowerCase();
+    if(cats[cat]) cats[cat].push(b.price || 0);
+  });
+
+  const grid = document.getElementById('services-sum-grid');
+  if(!grid) return;
+
+  const catLabels = { body:'Body', face:'Face', recovery:'Recovery' };
+  grid.innerHTML = Object.entries(cats).map(([cat, prices]) => {
+    const count = prices.length;
+    const avg   = count ? Math.round(prices.reduce((a,b) => a+b, 0) / count) : 0;
+    return `
+      <div class="svc-sum-card">
+        <div class="svc-sum-card__cat">${catLabels[cat]}</div>
+        <div class="svc-sum-card__num">${count}</div>
+        <div class="svc-sum-card__label">total bookings</div>
+        <div class="svc-sum-card__avg">Avg per session: <strong>&#8369;${avg.toLocaleString()}</strong></div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ============================================================
+   TODAY LABEL
+   ============================================================ */
+function setTodayLabel(){
+  const el = document.getElementById('today-label');
+  if(el){
+    const d = new Date(TODAY + 'T12:00:00');
+    el.textContent = d.toLocaleDateString('en-PH',{month:'long',day:'numeric'});
+  }
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+document.addEventListener('DOMContentLoaded', () => {
+  setTodayLabel();
+  buildMiniCal('mini-cal-grid', 32);
+  buildMiniCal('full-cal-grid', 44);
+  renderBookingsTable();
+  renderLiveSchedule();
+  renderClients();
+  renderServicesSummary();
+});
+</script>
+</body>
+</html>
