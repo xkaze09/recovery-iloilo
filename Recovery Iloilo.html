@@ -34,7 +34,10 @@
   --serif: "Cormorant Garamond", Georgia, serif;
   --sans:  "DM Sans", system-ui, sans-serif;
   --maxw:  1280px;
-  --gutter:clamp(20px,5vw,80px);
+  /* gutter: 20px on small mobile → scales to 80px on wide desktop */
+  --gutter: clamp(20px, 5vw, 80px);
+  /* safe-edge: guarantees content never touches viewport edge on any device */
+  --safe-edge: max(20px, env(safe-area-inset-left, 0px));
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{-webkit-text-size-adjust:100%}
@@ -115,8 +118,12 @@ a{color:inherit;text-decoration:none}
 .nav__inner{
   max-width:var(--maxw);margin:0 auto;
   display:flex;align-items:center;justify-content:space-between;
-  padding:20px clamp(48px,8vw,110px);
+  /* mobile: 20px edge; desktop scales up */
+  padding:18px 20px;
   transition:padding .5s;
+}
+@media(min-width:861px){
+  .nav__inner{ padding-inline:clamp(40px,7vw,110px); }
 }
 .nav.solid .nav__inner{padding-block:12px}
 .nav__logo{display:flex;align-items:center;gap:9px;text-decoration:none}
@@ -166,11 +173,15 @@ a{color:inherit;text-decoration:none}
 @media(max-width:860px){
   .nav__links,.nav__phone{display:none}
   .nav__burger{
-    display:flex;flex-direction:column;gap:5px;
-    cursor:pointer;background:none;border:0;padding:6px;
+    /* 44×44px minimum touch target per UX guidelines */
+    display:flex;flex-direction:column;gap:5px;align-items:center;justify-content:center;
+    cursor:pointer;background:none;border:0;
+    min-width:44px;min-height:44px;padding:10px;
+    margin-right:-10px; /* compensate padding so it doesn't shift layout */
   }
   .nav__burger span{width:24px;height:1.5px;background:var(--on-dark);transition:background .5s}
   .nav.solid .nav__burger span{background:var(--ink)}
+  .nav__logo-text{font-size:17px} /* slightly tighter on small screens */
 }
 
 /* ============================================================
@@ -204,7 +215,7 @@ a{color:inherit;text-decoration:none}
 }
 .hero__inner{
   position:relative;z-index:2;width:100%;
-  padding:clamp(100px,14vh,144px) clamp(28px,4vw,56px) clamp(40px,6vh,64px);
+  padding:clamp(90px,13vh,144px) clamp(20px,4vw,56px) clamp(32px,5vh,64px);
   display:flex;flex-direction:column;justify-content:space-between;gap:40px;
 }
 .hero__top{display:flex;justify-content:flex-end}
@@ -353,7 +364,7 @@ a{color:inherit;text-decoration:none}
 .gallery__stage{overflow:hidden}
 .gallery__pin-wrap{
   display:flex;align-items:center;height:100vh;
-  padding:0 clamp(30px,5vw,80px);gap:clamp(16px,2.4vw,28px);
+  padding:0 var(--gutter);gap:clamp(14px,2vw,28px);
   will-change:transform;
 }
 .gallery__card{
@@ -658,7 +669,7 @@ a{color:inherit;text-decoration:none}
 /* content sits above orbs */
 .footer__content{position:relative;z-index:1}
 .footer__wordmark-wrap{
-  padding:clamp(80px,12vh,150px) var(--gutter) clamp(40px,6vh,64px);
+  padding:clamp(70px,11vh,150px) var(--gutter) clamp(36px,5vh,64px);
   text-align:center;
   border-bottom:1px solid rgba(239,233,220,.08);
 }
@@ -1989,12 +2000,15 @@ a{color:inherit;text-decoration:none}
 /* ================================================================
    LENIS SMOOTH SCROLL
    ================================================================ */
+/* Touch devices (phones/tablets) get native scroll — Lenis smooth wheel only on desktop */
+const isTouchDevice = window.matchMedia('(pointer:coarse)').matches;
+
 const lenis = new Lenis({
-  duration: 1.25,
-  easing: t => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-  orientation: 'vertical',
-  smoothWheel: true,
-  smoothTouch: false,
+  duration:     isTouchDevice ? 0.01 : 1.25,
+  easing:       t => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  orientation:  'vertical',
+  smoothWheel:  !isTouchDevice,   // wheel smoothing only on pointer:fine devices
+  smoothTouch:  false,            // never intercept native touch momentum
   prevent: node => node.closest('.service-overlay__panel, .booking-modal__panel') !== null,
 });
 function rafLoop(time){ lenis.raf(time); requestAnimationFrame(rafLoop); }
@@ -2009,7 +2023,8 @@ lenis.on('scroll', ({progress}) => {
    GSAP SETUP
    ================================================================ */
 gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
-ScrollTrigger.normalizeScroll(true);
+/* normalizeScroll causes jank on mobile — desktop only */
+if(!isTouchDevice) ScrollTrigger.normalizeScroll(true);
 
 // Sync Lenis with GSAP ScrollTrigger
 lenis.on('scroll', ScrollTrigger.update);
