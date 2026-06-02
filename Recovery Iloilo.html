@@ -2151,10 +2151,10 @@ document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 })();
 
 /* ================================================================
-   HERO PARALLAX
+   HERO PARALLAX — desktop only
    ================================================================ */
 const heroSlides = document.getElementById('hero-slides');
-lenis.on('scroll', ({scroll}) => {
+if (!isTouchDevice) lenis.on('scroll', ({scroll}) => {
   if(scroll < window.innerHeight && heroSlides){
     heroSlides.style.transform = `translateY(${scroll * 0.24}px)`;
   }
@@ -2503,13 +2503,14 @@ ScrollTrigger.create({
       { opacity:1, y:0, duration:1, stagger:.12, ease:'power3.out' });
   }
 });
-// Parallax uses yPercent (separate axis from entrance y) — safe to combine
-gsap.to('.intro__photo--arch', { yPercent:-14, ease:'none',
-  scrollTrigger:{ trigger:'.intro', scrub:1.6, start:'top bottom', end:'bottom top' }});
-gsap.to('.intro__photo--sq1',  { yPercent:-24, ease:'none',
-  scrollTrigger:{ trigger:'.intro', scrub:2,   start:'top bottom', end:'bottom top' }});
-gsap.to('.intro__photo--sq2',  { yPercent:-8,  ease:'none',
-  scrollTrigger:{ trigger:'.intro', scrub:1,   start:'top bottom', end:'bottom top' }});
+if (!isTouchDevice) {
+  gsap.to('.intro__photo--arch', { yPercent:-14, ease:'none',
+    scrollTrigger:{ trigger:'.intro', scrub:1.6, start:'top bottom', end:'bottom top' }});
+  gsap.to('.intro__photo--sq1',  { yPercent:-24, ease:'none',
+    scrollTrigger:{ trigger:'.intro', scrub:2,   start:'top bottom', end:'bottom top' }});
+  gsap.to('.intro__photo--sq2',  { yPercent:-8,  ease:'none',
+    scrollTrigger:{ trigger:'.intro', scrub:1,   start:'top bottom', end:'bottom top' }});
+}
 
 // Hover 3D tilt on intro photos
 document.querySelectorAll('.intro__photo').forEach(photo => {
@@ -2543,26 +2544,28 @@ ScrollTrigger.create({
       { opacity:1, y:0, duration:1.2, delay:0.4, ease:'power3.out' });
   }
 });
-// Parallax on concept body — uses separate yPercent axis
-gsap.to('.concept__body', { yPercent:-6, ease:'none',
-  scrollTrigger:{ trigger:'.concept', scrub:1.6, start:'top bottom', end:'bottom top' }});
+if (!isTouchDevice) {
+  gsap.to('.concept__body', { yPercent:-6, ease:'none',
+    scrollTrigger:{ trigger:'.concept', scrub:1.6, start:'top bottom', end:'bottom top' }});
+}
 
 /* reviews use CSS marquee — no GSAP needed */
 
 /* ================================================================
-   GSAP — FOOTER GRADIENT ORBS (living depth)
+   GSAP — FOOTER GRADIENT ORBS (desktop only — mobile skips for perf)
    ================================================================ */
-if(document.getElementById('f-orb1')){
-  gsap.to('#f-orb1', { x:'22%', y:'12%', duration:14, repeat:-1, yoyo:true, ease:'sine.inOut' });
-  gsap.to('#f-orb2', { x:'-18%', y:'-10%', duration:11, repeat:-1, yoyo:true, ease:'sine.inOut', delay:3 });
-  gsap.to('#f-orb3', { x:'12%', y:'18%', duration:9,  repeat:-1, yoyo:true, ease:'sine.inOut', delay:5 });
-  gsap.to('#f-orb4', { x:'-14%', y:'8%', duration:12, repeat:-1, yoyo:true, ease:'sine.inOut', delay:7 });
-}
-// Reviews orbs
-if(document.querySelector('.reviews__orb--1')){
-  gsap.to('.reviews__orb--1', { x:'16%', y:'10%', duration:12, repeat:-1, yoyo:true, ease:'sine.inOut' });
-  gsap.to('.reviews__orb--2', { x:'-14%', y:'-8%', duration:10, repeat:-1, yoyo:true, ease:'sine.inOut', delay:4 });
-  gsap.to('.reviews__orb--3', { x:'8%', y:'14%', duration:8, repeat:-1, yoyo:true, ease:'sine.inOut', delay:2 });
+if(!isTouchDevice){
+  if(document.getElementById('f-orb1')){
+    gsap.to('#f-orb1', { x:'22%', y:'12%', duration:14, repeat:-1, yoyo:true, ease:'sine.inOut' });
+    gsap.to('#f-orb2', { x:'-18%', y:'-10%', duration:11, repeat:-1, yoyo:true, ease:'sine.inOut', delay:3 });
+    gsap.to('#f-orb3', { x:'12%', y:'18%', duration:9,  repeat:-1, yoyo:true, ease:'sine.inOut', delay:5 });
+    gsap.to('#f-orb4', { x:'-14%', y:'8%', duration:12, repeat:-1, yoyo:true, ease:'sine.inOut', delay:7 });
+  }
+  if(document.querySelector('.reviews__orb--1')){
+    gsap.to('.reviews__orb--1', { x:'16%', y:'10%', duration:12, repeat:-1, yoyo:true, ease:'sine.inOut' });
+    gsap.to('.reviews__orb--2', { x:'-14%', y:'-8%', duration:10, repeat:-1, yoyo:true, ease:'sine.inOut', delay:4 });
+    gsap.to('.reviews__orb--3', { x:'8%', y:'14%', duration:8, repeat:-1, yoyo:true, ease:'sine.inOut', delay:2 });
+  }
 }
 
 /* ================================================================
