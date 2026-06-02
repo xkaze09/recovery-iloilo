@@ -171,7 +171,7 @@ a{color:inherit;text-decoration:none}
 .mobile-nav__close:hover{color:var(--on-dark)}
 
 @media(max-width:860px){
-  .nav__links,.nav__phone{display:none}
+  .nav__links,.nav__phone,.nav__booknow{display:none}
   .nav__burger{
     /* 44×44px minimum touch target per UX guidelines */
     display:flex;flex-direction:column;gap:5px;align-items:center;justify-content:center;
@@ -250,6 +250,7 @@ a{color:inherit;text-decoration:none}
    ============================================================ */
 .intro{
   padding-block:clamp(70px,10vh,130px);
+  padding-inline:var(--gutter);
   background:linear-gradient(162deg,var(--cream) 0%,#EDE4D3 100%);
 }
 .intro__grid{
@@ -287,6 +288,7 @@ a{color:inherit;text-decoration:none}
    ============================================================ */
 .concept{
   padding-block:clamp(40px,6vh,90px) clamp(70px,10vh,140px);
+  padding-inline:var(--gutter);
   background:linear-gradient(200deg,#EDE4D3 0%,var(--cream) 55%,#EAE1D1 100%);
 }
 .concept__grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(40px,8vw,130px)}
@@ -626,6 +628,7 @@ a{color:inherit;text-decoration:none}
    ============================================================ */
 .insta{
   padding-block:clamp(70px,10vh,130px) clamp(50px,7vh,80px);
+  padding-inline:var(--gutter);
   background:linear-gradient(180deg,#EDE4D3 0%,var(--cream) 100%);
 }
 .insta__head{
@@ -1106,7 +1109,7 @@ a{color:inherit;text-decoration:none}
     </div>
     <div class="nav__right">
       <span class="nav__phone">0985 335 9998</span>
-      <button class="btn btn--dark" onclick="openBooking()">Book Now</button>
+      <button class="btn btn--dark nav__booknow" onclick="openBooking()">Book Now</button>
       <button class="nav__burger" id="burger-btn" aria-label="Menu" aria-expanded="false">
         <span></span><span></span><span></span>
       </button>
@@ -1998,21 +2001,48 @@ a{color:inherit;text-decoration:none}
 <!-- ============================== SCRIPTS ============================== -->
 <script>
 /* ================================================================
-   LENIS SMOOTH SCROLL
+   SCROLL — Lenis on desktop, native on touch
    ================================================================ */
-/* Touch devices (phones/tablets) get native scroll — Lenis smooth wheel only on desktop */
 const isTouchDevice = window.matchMedia('(pointer:coarse)').matches;
 
-const lenis = new Lenis({
-  duration:     isTouchDevice ? 0.01 : 1.25,
-  easing:       t => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-  orientation:  'vertical',
-  smoothWheel:  !isTouchDevice,   // wheel smoothing only on pointer:fine devices
-  smoothTouch:  false,            // never intercept native touch momentum
-  prevent: node => node.closest('.service-overlay__panel, .booking-modal__panel') !== null,
-});
-function rafLoop(time){ lenis.raf(time); requestAnimationFrame(rafLoop); }
-requestAnimationFrame(rafLoop);
+let lenis;
+if (!isTouchDevice) {
+  lenis = new Lenis({
+    duration:    1.25,
+    easing:      t => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    orientation: 'vertical',
+    smoothWheel: true,
+    smoothTouch: false,
+    prevent: node => node.closest('.service-overlay__panel, .booking-modal__panel') !== null,
+  });
+  gsap.ticker.add((time) => { lenis.raf(time * 1000); });
+  gsap.ticker.lagSmoothing(0);
+} else {
+  /* Native-scroll shim — same API surface so all lenis.* calls below still work */
+  lenis = {
+    _listeners: [],
+    on(event, fn) {
+      if (event !== 'scroll') return;
+      const handler = () => {
+        const scrollY = window.scrollY;
+        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+        fn({ scroll: scrollY, progress: maxScroll > 0 ? scrollY / maxScroll : 0 });
+      };
+      this._listeners.push(handler);
+      window.addEventListener('scroll', handler, { passive: true });
+    },
+    scrollTo(target, opts = {}) {
+      const offset = opts.offset || 0;
+      const top = target instanceof Element
+        ? target.getBoundingClientRect().top + window.scrollY + offset
+        : (target || 0) + offset;
+      window.scrollTo({ top, behavior: 'smooth' });
+    },
+    stop()  { document.body.style.overflow = 'hidden'; },
+    start() { document.body.style.overflow = ''; },
+    raf()   {},
+  };
+}
 
 // Scroll progress bar
 lenis.on('scroll', ({progress}) => {
@@ -2023,13 +2053,10 @@ lenis.on('scroll', ({progress}) => {
    GSAP SETUP
    ================================================================ */
 gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
-/* normalizeScroll causes jank on mobile — desktop only */
-if(!isTouchDevice) ScrollTrigger.normalizeScroll(true);
-
-// Sync Lenis with GSAP ScrollTrigger
-lenis.on('scroll', ScrollTrigger.update);
-gsap.ticker.add((time) => { lenis.raf(time * 1000); });
-gsap.ticker.lagSmoothing(0);
+if (!isTouchDevice) {
+  ScrollTrigger.normalizeScroll(true);
+  lenis.on('scroll', ScrollTrigger.update);
+}
 
 /* ================================================================
    NAV
